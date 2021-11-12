@@ -1,0 +1,16 @@
+{
+    "version": "0.2.0",
+    "configurations": [        
+        {
+            "name": ".NET Core Launch (console) - Console Example",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            "program": "${workspaceFolder}/demos/NzCovidPass.Console/bin/Debug/net6.0/NzCovidPass.Console.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "stopAtEntry": false,
+            "console": "integratedTerminal"
+        }
+    ]
+}

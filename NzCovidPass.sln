@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30114.105
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NzCovidPass.Core", "src\NzCovidPass.Core\NzCovidPass.Core.csproj", "{4E4565DC-3981-4229-8DC8-C4ADA91667E3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NzCovidPass.Console", "demos\NzCovidPass.Console\NzCovidPass.Console.csproj", "{A2449EDF-A3B8-41E6-9104-8D728C0CC4A7}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4E4565DC-3981-4229-8DC8-C4ADA91667E3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4E4565DC-3981-4229-8DC8-C4ADA91667E3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4E4565DC-3981-4229-8DC8-C4ADA91667E3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4E4565DC-3981-4229-8DC8-C4ADA91667E3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A2449EDF-A3B8-41E6-9104-8D728C0CC4A7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A2449EDF-A3B8-41E6-9104-8D728C0CC4A7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A2449EDF-A3B8-41E6-9104-8D728C0CC4A7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A2449EDF-A3B8-41E6-9104-8D728C0CC4A7}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
