@@ -20,8 +20,8 @@ namespace NzCovidPass.Core.Verification
         public async Task<DecentralizedIdentifierDocument> GetDocumentAsync(string issuer)
         {            
             // See https://nzcp.covid19.health.nz/#example-resolving-an-issuers-identifier-to-their-public-keys
-            var address = issuer.Replace("did:web:", string.Empty);
-            var uriBuilder = new UriBuilder(Uri.UriSchemeHttps, address)
+            var host = issuer.Replace("did:web:", string.Empty);
+            var uriBuilder = new UriBuilder(Uri.UriSchemeHttps, host)
             {
                 Path = ".well-known/did.json"
             };
@@ -34,17 +34,7 @@ namespace NzCovidPass.Core.Verification
                 .GetAsync(uriBuilder.Uri)
                 .ConfigureAwait(false);
 
-            if (!response.IsSuccessStatusCode)
-            {
-                _logger.LogError(
-                    "{Method} request to '{Uri}' failed with status code '{StatusCode}'",
-                    response.RequestMessage?.Method,
-                    response.RequestMessage?.RequestUri,
-                    response.StatusCode);
-
-                // TODO
-                throw new Exception();
-            }
+            response.EnsureSuccessStatusCode();
 
             var document = await response
                 .Content

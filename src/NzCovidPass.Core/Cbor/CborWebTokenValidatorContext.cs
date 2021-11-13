@@ -18,6 +18,7 @@ namespace NzCovidPass.Core.Cbor
         public static FailureReason AlgorithmValidationFailed => new(nameof(AlgorithmValidationFailed), "Algorithm validation failed.");
         public static FailureReason IssuerValidationFailed => new(nameof(IssuerValidationFailed), "Issuer validation failed.");
         public static FailureReason LifetimeValidationFailed => new(nameof(LifetimeValidationFailed), "Lifetime validation failed.");
+        public static FailureReason VerificationKeyRetrievalFailed => new(nameof(VerificationKeyRetrievalFailed), "Verification key retrieval failed.");
         public static FailureReason SignatureValidationFailed => new(nameof(SignatureValidationFailed), "Signature validation failed.");
     }
 }

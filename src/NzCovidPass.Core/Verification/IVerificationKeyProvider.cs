@@ -4,6 +4,6 @@ namespace NzCovidPass.Core.Verification
 {
     public interface IVerificationKeyProvider
     {
-        Task<JsonWebKey> GetKeyAsync(string issuer, string keyId);
+        Task<SecurityKey> GetKeyAsync(string issuer, string keyId);
     }
 }

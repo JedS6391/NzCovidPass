@@ -42,9 +42,14 @@ namespace NzCovidPass.Core.Cbor
 
             _logger.LogDebug("Validating token signature");
 
-            var verificationKey = await _verificationKeyProvider
-                .GetKeyAsync(token.Issuer, token.KeyId)
-                .ConfigureAwait(false);
+            var verificationKey = await GetVerificationKeyAsync(token).ConfigureAwait(false);
+
+            if (verificationKey == null)
+            {
+                context.Fail(CborWebTokenValidatorContext.VerificationKeyRetrievalFailed);
+
+                return context;
+            }
 
             ValidateSignature(context, verificationKey);
 
@@ -170,6 +175,22 @@ namespace NzCovidPass.Core.Cbor
                 cryptoProviderFactory.ReleaseSignatureProvider(signatureProvider);
             }
         } 
+
+        private async Task<SecurityKey?> GetVerificationKeyAsync(CborWebToken token)
+        {
+            try
+            {
+                return await _verificationKeyProvider
+                    .GetKeyAsync(token.Issuer, token.KeyId)
+                    .ConfigureAwait(false);
+            }
+            catch (Exception exception)
+            {
+                _logger.LogError(exception, "Failed to retrieve verification key.");
+
+                return null;
+            }
+        }
 
         private static byte[] GetSignedBytes(CborWebToken token)
         {
