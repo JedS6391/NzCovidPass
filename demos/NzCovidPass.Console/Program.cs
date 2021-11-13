@@ -33,3 +33,7 @@ var verifier = host.Services.GetRequiredService<PassVerifier>();
 var result = await verifier.VerifyAsync(CovidPassValid);
 
 Console.WriteLine(result);
+
+var details = result.Credentials.Details;
+
+Console.WriteLine($"{details.FamilyName}, {details.GivenName} - {details.DateOfBirth}");

@@ -22,6 +22,9 @@ var result = await verifier.VerifyAsync("...");
 if (result.HasSucceeded)
 {
     // Pass is valid.
+    var details = result.Credentials.Details;
+
+    Console.WriteLine($"{details.FamilyName}, {details.GivenName} - {details.DateOfBirth}");
 }
 else
 {
