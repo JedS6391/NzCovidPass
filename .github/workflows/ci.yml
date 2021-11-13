@@ -15,13 +15,13 @@ jobs:
     steps:
     - uses: actions/checkout@master
 
-    - name: Set up .NET Core
+    - name: Set up .NET
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: '6.0.x'
 
-    - name: Build with dotnet
+    - name: Build
       run: dotnet build --configuration Release
 
-    - name: Run tests
+    - name: Test
       run: dotnet test
