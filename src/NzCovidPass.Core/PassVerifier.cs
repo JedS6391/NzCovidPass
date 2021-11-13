@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using NzCovidPass.Core.Cbor;
 using NzCovidPass.Core.Shared;
+using NzCovidPass.Core.Tokens;
 
 namespace NzCovidPass.Core
 {
@@ -83,7 +83,7 @@ namespace NzCovidPass.Core
             // Read the token to validate its contents and signature
             var payload = passComponents[2];
 
-            if (!_tokenReader.TryReadToken(payload, out var token) || token == null)
+            if (!_tokenReader.TryReadToken(payload, out var token) || token is null)
             {
                 _logger.LogError("Token read failed [Payload = '{Payload}']", payload);
 
@@ -92,12 +92,16 @@ namespace NzCovidPass.Core
                 return context;
             }
 
-            var tokenValidationContext = await _tokenValidator
-                .ValidateTokenAsync(token)
+            var validationContext = new CborWebTokenValidatorContext(token);
+
+            await _tokenValidator
+                .ValidateTokenAsync(validationContext)
                 .ConfigureAwait(false);
 
-            if (tokenValidationContext.HasFailed)
+            if (validationContext.HasFailed)
             {
+                _logger.LogDebug("Token validation failed [Failures = {Failures}]", string.Join(", ", validationContext.FailureReasons.Select(fr => fr.Code)));
+
                 context.Fail(PassVerifierContext.TokenValidationFailed);
 
                 return context;

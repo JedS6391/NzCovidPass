@@ -3,7 +3,7 @@ using Dahomey.Cbor.ObjectModel;
 using Microsoft.Extensions.Logging;
 using NzCovidPass.Core.Shared;
 
-namespace NzCovidPass.Core.Cbor
+namespace NzCovidPass.Core.Tokens
 {
     public class CborWebTokenReader : ICborWebTokenReader
     {
@@ -56,7 +56,7 @@ namespace NzCovidPass.Core.Cbor
             }
         }
 
-        private string AddBase32Padding(string base32Payload)
+        private static string AddBase32Padding(string base32Payload)
         {
             var unpaddedLength = base32Payload.Length % 8;
 

@@ -5,14 +5,26 @@ using Microsoft.IdentityModel.Tokens;
 using NzCovidPass.Core.Models;
 using NzCovidPass.Core.Shared;
 
-namespace NzCovidPass.Core.Cbor
+namespace NzCovidPass.Core.Tokens
 {
+    /// <summary>
+    /// A <see cref="SecurityToken" /> designed for representing a CBOR Web Token (CWT).
+    /// </summary>
+    /// <remarks>
+    /// <see href="https://datatracker.ietf.org/doc/html/rfc8392" />
+    /// </remarks>
     public class CborWebToken : SecurityToken
     {
         private readonly Header _header;
         private readonly Payload _payload;
         private readonly Signature _signature;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="CborWebToken" /> class.
+        /// </summary>
+        /// <param name="header">The CWT header.</param>
+        /// <param name="payload">The CWT payload.</param>
+        /// <param name="signature">The CWT signature.</param>
         public CborWebToken(Header header, Payload payload, Signature signature)
         {
             _header = Requires.NotNull(header);

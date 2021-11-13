@@ -1,4 +1,4 @@
-namespace NzCovidPass.Core.Cbor
+namespace NzCovidPass.Core.Tokens
 {
     public interface ICborWebTokenReader
     {

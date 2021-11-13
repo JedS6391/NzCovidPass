@@ -32,8 +32,13 @@ var verifier = host.Services.GetRequiredService<PassVerifier>();
 
 var result = await verifier.VerifyAsync(CovidPassValid);
 
-Console.WriteLine(result);
+if (result.HasSucceeded)
+{
+    var details = result.Credentials.Details;
 
-var details = result.Credentials.Details;
-
-Console.WriteLine($"{details.FamilyName}, {details.GivenName} - {details.DateOfBirth}");
+    Console.WriteLine($"NZ COVID Pass subject details: {details.FamilyName}, {details.GivenName} - {details.DateOfBirth}");
+}
+else
+{
+    Console.WriteLine($"Verification failed: {string.Join(", ", result.FailureReasons.Select(fr => fr.Code))}");
+}

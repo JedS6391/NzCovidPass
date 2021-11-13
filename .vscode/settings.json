@@ -3,5 +3,8 @@
         "**/.vs": true,
         "**/bin": true,
         "**/obj": true
-    }
+    },
+    "cSpell.words": [
+        "Cbor"
+    ]
 }

@@ -5,7 +5,7 @@ using Microsoft.IdentityModel.Tokens;
 using NzCovidPass.Core.Shared;
 using NzCovidPass.Core.Verification;
 
-namespace NzCovidPass.Core.Cbor
+namespace NzCovidPass.Core.Tokens
 {
     public class CborWebTokenValidator : ICborWebTokenValidator
     {
@@ -23,11 +23,11 @@ namespace NzCovidPass.Core.Cbor
             _verificationKeyProvider = Requires.NotNull(verificationKeyProvider);
         }
 
-        public async Task<CborWebTokenValidatorContext> ValidateTokenAsync(CborWebToken token)
+        public async Task ValidateTokenAsync(CborWebTokenValidatorContext context)
         {
-            ArgumentNullException.ThrowIfNull(token);
+            ArgumentNullException.ThrowIfNull(context);
 
-            var context = new CborWebTokenValidatorContext(token);
+            var token = context.Token;
 
             _logger.LogDebug("Validating token payload");
 
@@ -37,18 +37,18 @@ namespace NzCovidPass.Core.Cbor
             {
                 _logger.LogError("Token payload is not valid");
 
-                return context;
+                return;
             }
 
             _logger.LogDebug("Validating token signature");
 
             var verificationKey = await GetVerificationKeyAsync(token).ConfigureAwait(false);
 
-            if (verificationKey == null)
+            if (verificationKey is null)
             {
                 context.Fail(CborWebTokenValidatorContext.VerificationKeyRetrievalFailed);
 
-                return context;
+                return;
             }
 
             ValidateSignature(context, verificationKey);
@@ -57,14 +57,14 @@ namespace NzCovidPass.Core.Cbor
             {
                 _logger.LogError("Token signature is not valid");
 
-                return context;
+                return;
             }
 
             token.SigningKey = verificationKey;
 
             context.Succeed();
 
-            return context;
+            return;
         }
 
         private void ValidatePayload(CborWebTokenValidatorContext context)

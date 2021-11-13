@@ -1,51 +1,64 @@
 namespace NzCovidPass.Core.Shared
 {
-    // https://stackoverflow.com/a/7135008
+    /// <summary>
+    /// Helpers for base-32 encoded data.
+    /// </summary>
+    /// <remarks>
+    /// Taken from <see href="https://stackoverflow.com/a/7135008" />
+    /// </remarks>
     internal class Base32
     {
+        /// <summary>
+        /// Converts <paramref name="input" /> which encodes binary data as base-32 digits,
+        /// to an equivalent 8-bit unsigned integer array.
+        /// </summary>
+        /// <param name="input">The base-32 encoded input.</param>
+        /// <returns>The decoded output.</returns>
         public static byte[] ToBytes(string input)
         {
             ArgumentNullException.ThrowIfNull(input);
 
-            input = input.TrimEnd('='); //remove padding characters
-            int byteCount = input.Length * 5 / 8; //this must be TRUNCATED
-            byte[] returnArray = new byte[byteCount];
+            // Remove padding characters
+            input = input.TrimEnd('=');
 
-            byte curByte = 0, bitsRemaining = 8;
-            int mask = 0, arrayIndex = 0;
+            var byteCount = input.Length * 5 / 8;
+            var decodedOutput = new byte[byteCount];
 
-            foreach (char c in input)
+            byte currentByte = 0, bitsRemaining = 8;
+            int mask = 0, index = 0;
+
+            foreach (var c in input)
             {
-                int cValue = CharToValue(c);
+                var characterValue = CharToValue(c);
 
                 if (bitsRemaining > 5)
                 {
-                    mask = cValue << (bitsRemaining - 5);
-                    curByte = (byte)(curByte | mask);
+                    mask = characterValue << (bitsRemaining - 5);
+                    currentByte = (byte) (currentByte | mask);
                     bitsRemaining -= 5;
                 }
                 else
                 {
-                    mask = cValue >> (5 - bitsRemaining);
-                    curByte = (byte)(curByte | mask);
-                    returnArray[arrayIndex++] = curByte;
-                    curByte = (byte)(cValue << (3 + bitsRemaining));
+                    mask = characterValue >> (5 - bitsRemaining);
+                    currentByte = (byte) (currentByte | mask);
+                    decodedOutput[index++] = currentByte;
+                    currentByte = (byte) (characterValue << (3 + bitsRemaining));
                     bitsRemaining += 3;
                 }
             }
 
-            //if we didn't end with a full byte
-            if (arrayIndex != byteCount)
+            // Didn't end with a full byte
+            if (index != byteCount)
             {
-                returnArray[arrayIndex] = curByte;
+                decodedOutput[index] = currentByte;
             }
 
-            return returnArray;
+            return decodedOutput;
         }
 
         private static int CharToValue(char c)
         {
-            int value = (int)c;
+            var value = (int) c;
 
             //65-90 == uppercase letters
             if (value < 91 && value > 64)

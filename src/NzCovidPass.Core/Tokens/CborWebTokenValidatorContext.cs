@@ -1,14 +1,14 @@
 using NzCovidPass.Core.Shared;
 
-namespace NzCovidPass.Core.Cbor
+namespace NzCovidPass.Core.Tokens
 {
-    public class CborWebTokenValidatorContext : Context
+    public class CborWebTokenValidatorContext : ValidationContext
     {
         private readonly CborWebToken _token;
 
         public CborWebTokenValidatorContext(CborWebToken token)
         {
-            _token = token;
+            _token = Requires.NotNull(token);
         }
 
         public CborWebToken Token => _token;

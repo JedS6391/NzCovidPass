@@ -1,5 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
-using NzCovidPass.Core.Cbor;
+using NzCovidPass.Core.Tokens;
 using NzCovidPass.Core.Verification;
 
 namespace NzCovidPass.Core.Shared
@@ -29,7 +29,7 @@ namespace NzCovidPass.Core.Shared
 
             services.AddSingleton<ICborWebTokenReader, CborWebTokenReader>();
             services.AddSingleton<ICborWebTokenValidator, CborWebTokenValidator>();
-            services.AddSingleton<IVerificationKeyProvider, VerificationKeyProvider>();
+            services.AddSingleton<IVerificationKeyProvider, DecentralizedIdentifierDocumentVerificationKeyProvider>();
             services.AddSingleton<IDecentralizedIdentifierDocumentRetriever, HttpDecentralizedIdentifierDocumentRetriever>();
             services.AddSingleton<PassVerifier>();
 
@@ -47,5 +47,5 @@ namespace NzCovidPass.Core.Shared
         private static void ConfigureDefaultClient(HttpClient client)
         {
         }
-}
+    }
 }
