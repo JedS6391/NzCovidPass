@@ -1,3 +1,4 @@
+using NzCovidPass.Core.Models;
 namespace NzCovidPass.Core.Verification
 {
     public interface IDecentralizedIdentifierDocumentRetriever

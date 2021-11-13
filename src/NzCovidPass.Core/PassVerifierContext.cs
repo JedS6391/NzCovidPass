@@ -1,4 +1,5 @@
 using NzCovidPass.Core.Cbor;
+using NzCovidPass.Core.Models;
 using NzCovidPass.Core.Shared;
 
 namespace NzCovidPass.Core
@@ -24,6 +25,19 @@ namespace NzCovidPass.Core
         public CborWebToken Token => (HasSucceeded && _token != null) ?
             _token :
             throw new InvalidOperationException("Token has not been set.");
+
+        /// <summary>
+        /// Gets the public COVID pass contained in the token that was verified.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Will only be available when <see cref="HasSucceeded" /> is <see langword="true" />.
+        /// </para>
+        /// <para>
+        /// Attempting to access when <see cref="HasSucceeded" /> is <see langword="false" /> will throw an <see cref="InvalidOperationException" />.
+        /// </para>
+        /// </remarks>
+        public PublicCovidPass Credentials => Token.Credentials;
 
         /// <summary>
         /// Marks the context as succeeded for <paramref name="token" />.

@@ -1,6 +1,8 @@
 using System.Text;
+using System.Text.Json;
 using Dahomey.Cbor.ObjectModel;
 using Microsoft.IdentityModel.Tokens;
+using NzCovidPass.Core.Models;
 using NzCovidPass.Core.Shared;
 
 namespace NzCovidPass.Core.Cbor
@@ -31,6 +33,7 @@ namespace NzCovidPass.Core.Cbor
         public Guid Cti => _payload.Cti;
         public DateTimeOffset Expiry => _payload.Expiry;
         public DateTimeOffset NotBefore => _payload.NotBefore;
+        public PublicCovidPass Credentials => _payload.Credentials;
         public byte[] HeaderBytes => _header.Bytes;
         public byte[] PayloadBytes => _payload.Bytes;
         public byte[] SignatureBytes => _signature.Bytes;
@@ -76,6 +79,8 @@ namespace NzCovidPass.Core.Cbor
 
             public DateTimeOffset NotBefore => DateTimeOffset.FromUnixTimeSeconds(ReadClaimValue<int>(_cborObject, Constants.Payload.Nbf));
 
+            public PublicCovidPass? Credentials => JsonSerializer.Deserialize<PublicCovidPass>(ReadClaimValueAsString(_cborObject, Constants.Payload.Vc));
+
             public byte[] Bytes => _rawPayload.ToArray();
         }
 
@@ -91,13 +96,20 @@ namespace NzCovidPass.Core.Cbor
             public byte[] Bytes => _rawSignature.ToArray();
         }
 
-        private static T ReadClaimValue<T>(CborObject cborObject, int claimId)
+        private static T ReadClaimValue<T>(CborObject cborObject, CborValue claimId)
         {
             var rawClaimValue = cborObject[claimId];
 
             var decodedClaimValue = rawClaimValue.Value<T>();
 
             return decodedClaimValue;
+        }
+
+        private static string ReadClaimValueAsString(CborObject cborObject, CborValue claimId)
+        {
+            var rawClaimValue = cborObject[claimId];
+
+            return rawClaimValue.ToString();
         }
 
         private static class Constants

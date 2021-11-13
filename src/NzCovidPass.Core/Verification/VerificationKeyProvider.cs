@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
+using NzCovidPass.Core.Models;
 using NzCovidPass.Core.Shared;
 
 namespace NzCovidPass.Core.Verification

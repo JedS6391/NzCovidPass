@@ -24,6 +24,11 @@ public class PassVerifierTests
         Assert.True(result.HasSucceeded);
         Assert.False(result.HasFailed);
         Assert.NotNull(result.Token);
+        Assert.NotNull(result.Credentials);
+        Assert.Contains("PublicCovidPass", result.Credentials.Types);
+        Assert.Equal("Jack", result.Credentials.Details.GivenName);
+        Assert.Equal("Sparrow", result.Credentials.Details.FamilyName);
+        Assert.Equal("1960-04-16", result.Credentials.Details.DateOfBirth);
         Assert.Empty(result.FailureReasons);
     }
 
@@ -47,6 +52,7 @@ public class PassVerifierTests
         Assert.False(result.HasSucceeded);
         Assert.True(result.HasFailed);
         Assert.Throws<InvalidOperationException>(() => result.Token);
+        Assert.Throws<InvalidOperationException>(() => result.Credentials);
         Assert.NotEmpty(result.FailureReasons);
     }
 

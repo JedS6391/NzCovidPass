@@ -1,5 +1,6 @@
 using System.Net.Http.Json;
 using Microsoft.Extensions.Logging;
+using NzCovidPass.Core.Models;
 using NzCovidPass.Core.Shared;
 
 namespace NzCovidPass.Core.Verification
