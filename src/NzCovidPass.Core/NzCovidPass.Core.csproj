@@ -2,9 +2,26 @@
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
+    <Title>NzCovidPass.Core</Title>
+    <PackageDescription>Provides the ability to ability to verify New Zealand COVID Pass payloads in .NET.</PackageDescription>
+    <PackageId>NzCovidPass.Core</PackageId>
+    <Version>0.0.1</Version>
+    <Authors>Jed Simson</Authors>
+    <PackageTags>nz covid-19 verification</PackageTags>
+    <RepositoryUrl>https://github.com/JedS6391/NzCovidPass</RepositoryUrl> 
+    <RepositoryType>git</RepositoryType> 
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>                    
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>    
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>      
     <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
+    <Nullable>enable</Nullable>    
   </PropertyGroup>
+
+  <PropertyGroup>
+    <AnalysisMode>Default</AnalysisMode>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+  </PropertyGroup>  
 
   <ItemGroup>
     <PackageReference Include="Dahomey.Cbor" Version="1.15.3" />
