@@ -5,6 +5,7 @@ using NzCovidPass.Core.Shared;
 using System.Linq;
 using System.Threading.Tasks;
 using NzCovidPass.Core.Cbor;
+using System;
 
 namespace NzCovidPass.Test.Integration;
 
@@ -46,7 +47,7 @@ public class PassVerifierTests
         Assert.NotNull(result);
         Assert.False(result.HasSucceeded);
         Assert.True(result.HasFailed);
-        Assert.Null(result.Token);
+        Assert.Throws<InvalidOperationException>(() => result.Token);
         Assert.NotEmpty(result.FailureReasons);        
     }    
 

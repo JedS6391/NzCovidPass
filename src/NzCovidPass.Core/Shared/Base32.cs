@@ -1,7 +1,7 @@
 namespace NzCovidPass.Core.Shared
 {
     // https://stackoverflow.com/a/7135008
-    public class Base32
+    internal class Base32
     {
         public static byte[] ToBytes(string input)
         {
