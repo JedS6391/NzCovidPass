@@ -60,7 +60,9 @@ namespace NzCovidPass.Core.Cbor
                 return context;
             }
 
-            context.Succeed();
+            token.SigningKey = verificationKey;
+            
+            context.Succeed();            
 
             return context;
         }

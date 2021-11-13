@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using NzCovidPass.Core.Shared;
 using System.Linq;
 using System.Threading.Tasks;
+using NzCovidPass.Core.Cbor;
 
 namespace NzCovidPass.Test.Integration;
 
@@ -26,7 +27,30 @@ public class PassVerifierTests
         Assert.Empty(result.FailureReasons);
     }
 
-    private PassVerifier GetVerifier()
+    [Theory]
+    [InlineData(SampleCovidPass.PublicKeyInvalid)]
+    [InlineData(SampleCovidPass.PublicKeyNotFound)]
+    [InlineData(SampleCovidPass.SignatureModified)]
+    [InlineData(SampleCovidPass.PayloadModified)]
+    [InlineData(SampleCovidPass.Expired)]
+    [InlineData(SampleCovidPass.NotActive)]
+    public async Task VerifyAsync_InvalidPass_ReturnsFailResult(string passPayload)
+    {
+        // Arrange
+        var verifier = GetVerifier();
+
+        // Act
+        var result = await verifier.VerifyAsync(passPayload);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.False(result.HasSucceeded);
+        Assert.True(result.HasFailed);
+        Assert.Null(result.Token);
+        Assert.NotEmpty(result.FailureReasons);        
+    }    
+
+    private static PassVerifier GetVerifier()
     {
         var services = new ServiceCollection();
 

@@ -56,6 +56,6 @@ namespace NzCovidPass.Core.Shared
             return $"{GetType().Name}(Succeeded = {HasSucceeded}, Failed = {HasFailed})";
         }
 
-        public readonly record struct FailureReason(string code, string message);        
+        public readonly record struct FailureReason(string Code, string Message);        
     }
 }
