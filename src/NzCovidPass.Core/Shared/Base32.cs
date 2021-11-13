@@ -10,7 +10,7 @@ namespace NzCovidPass.Core.Shared
             input = input.TrimEnd('='); //remove padding characters
             int byteCount = input.Length * 5 / 8; //this must be TRUNCATED
             byte[] returnArray = new byte[byteCount];
-            
+
             byte curByte = 0, bitsRemaining = 8;
             int mask = 0, arrayIndex = 0;
 
@@ -46,7 +46,7 @@ namespace NzCovidPass.Core.Shared
         private static int CharToValue(char c)
         {
             int value = (int)c;
-            
+
             //65-90 == uppercase letters
             if (value < 91 && value > 64)
             {
@@ -64,6 +64,6 @@ namespace NzCovidPass.Core.Shared
             }
 
             throw new ArgumentException("Character is not a Base32 character.", nameof(c));
-        }        
+        }
     }
 }

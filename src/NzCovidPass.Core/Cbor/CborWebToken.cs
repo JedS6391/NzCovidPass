@@ -28,14 +28,14 @@ namespace NzCovidPass.Core.Cbor
         public string KeyId => _header.KeyId;
         public string Algorithm => _header.Algorithm;
         public string Jti => _payload.Jti;
-        public Guid Cti => _payload.Cti;        
+        public Guid Cti => _payload.Cti;
         public DateTimeOffset Expiry => _payload.Expiry;
         public DateTimeOffset NotBefore => _payload.NotBefore;
         public byte[] HeaderBytes => _header.Bytes;
         public byte[] PayloadBytes => _payload.Bytes;
         public byte[] SignatureBytes => _signature.Bytes;
 
-        public class Header 
+        public class Header
         {
             private readonly CborObject _cborObject;
             private readonly ReadOnlyMemory<byte> _rawHeader;
@@ -53,8 +53,8 @@ namespace NzCovidPass.Core.Cbor
 
             public byte[] Bytes => _rawHeader.ToArray();
         }
-        
-        public class Payload 
+
+        public class Payload
         {
             private readonly CborObject _cborObject;
             private readonly ReadOnlyMemory<byte> _rawPayload;
@@ -74,12 +74,12 @@ namespace NzCovidPass.Core.Cbor
 
             public DateTimeOffset Expiry => DateTimeOffset.FromUnixTimeSeconds(ReadClaimValue<int>(_cborObject, Constants.Payload.Exp));
 
-            public DateTimeOffset NotBefore => DateTimeOffset.FromUnixTimeSeconds(ReadClaimValue<int>(_cborObject, Constants.Payload.Nbf));  
+            public DateTimeOffset NotBefore => DateTimeOffset.FromUnixTimeSeconds(ReadClaimValue<int>(_cborObject, Constants.Payload.Nbf));
 
-            public byte[] Bytes => _rawPayload.ToArray();          
+            public byte[] Bytes => _rawPayload.ToArray();
         }
 
-        public class Signature 
+        public class Signature
         {
             private readonly ReadOnlyMemory<byte> _rawSignature;
 
@@ -89,7 +89,7 @@ namespace NzCovidPass.Core.Cbor
             }
 
             public byte[] Bytes => _rawSignature.ToArray();
-        }        
+        }
 
         private static T ReadClaimValue<T>(CborObject cborObject, int claimId)
         {
@@ -102,7 +102,7 @@ namespace NzCovidPass.Core.Cbor
 
         private static class Constants
         {
-            public static class Header 
+            public static class Header
             {
                 public const int Algorithm = 1;
                 public const int KeyId = 4;
@@ -113,7 +113,7 @@ namespace NzCovidPass.Core.Cbor
                 };
             }
 
-            public static class Payload 
+            public static class Payload
             {
                 public const int Iss = 1;
                 public const int Exp = 4;
@@ -121,6 +121,6 @@ namespace NzCovidPass.Core.Cbor
                 public const int Cti = 7;
                 public const string Vc = "vc";
             }
-        }        
+        }
     }
 }

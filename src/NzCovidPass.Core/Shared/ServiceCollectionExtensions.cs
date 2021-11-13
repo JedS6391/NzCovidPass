@@ -44,8 +44,8 @@ namespace NzCovidPass.Core.Shared
             options.ValidAlgorithms = PassVerifierOptions.Defaults.ValidAlgorithms.ToHashSet();
         }
 
-        private static void ConfigureDefaultClient(HttpClient client) 
-        {            
+        private static void ConfigureDefaultClient(HttpClient client)
+        {
         }
 }
-}   
+}

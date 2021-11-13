@@ -15,7 +15,7 @@ namespace NzCovidPass.Core.Cbor
 
         public CborWebTokenValidator(
             ILogger<CborWebTokenValidator> logger,
-            IOptions<PassVerifierOptions> verifierOptionsAccessor, 
+            IOptions<PassVerifierOptions> verifierOptionsAccessor,
             IVerificationKeyProvider verificationKeyProvider)
         {
             _logger = Requires.NotNull(logger);
@@ -61,8 +61,8 @@ namespace NzCovidPass.Core.Cbor
             }
 
             token.SigningKey = verificationKey;
-            
-            context.Succeed();            
+
+            context.Succeed();
 
             return context;
         }
@@ -102,7 +102,7 @@ namespace NzCovidPass.Core.Cbor
             {
                 _logger.LogError("Algorithm validation failed [Expected = '{{ {Expected} }}', Actual = '{Actual}']", string.Join(", ", _verifierOptions.ValidAlgorithms), token.Algorithm);
 
-                context.Fail(CborWebTokenValidatorContext.AlgorithmValidationFailed);             
+                context.Fail(CborWebTokenValidatorContext.AlgorithmValidationFailed);
             }
         }
 
@@ -126,7 +126,7 @@ namespace NzCovidPass.Core.Cbor
             {
                 _logger.LogError("Lifetime validation failed [Not Before ({NotBefore}) > Expiry ({Expiry})]", token.NotBefore, token.Expiry);
 
-                context.Fail(CborWebTokenValidatorContext.LifetimeValidationFailed);              
+                context.Fail(CborWebTokenValidatorContext.LifetimeValidationFailed);
             }
 
             var utcNow = DateTime.UtcNow;
@@ -162,13 +162,13 @@ namespace NzCovidPass.Core.Cbor
 
                 context.Fail(CborWebTokenValidatorContext.SignatureValidationFailed);
             }
-            
+
             var signatureProvider = cryptoProviderFactory.CreateForVerifying(key, algorithm);
 
             try
             {
                 if (!signatureProvider.Verify(signedBytes, signature))
-                {                    
+                {
                     context.Fail(CborWebTokenValidatorContext.SignatureValidationFailed);
                 }
             }
@@ -176,7 +176,7 @@ namespace NzCovidPass.Core.Cbor
             {
                 cryptoProviderFactory.ReleaseSignatureProvider(signatureProvider);
             }
-        } 
+        }
 
         private async Task<SecurityKey?> GetVerificationKeyAsync(CborWebToken token)
         {

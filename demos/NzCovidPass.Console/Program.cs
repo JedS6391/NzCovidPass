@@ -12,7 +12,7 @@ var host = Host
     .ConfigureServices((_, services) =>
     {
         services.AddNzCovidPassVerifier(
-            options => 
+            options =>
             {
                 var validIssuers = PassVerifierOptions.Defaults.ValidIssuers.ToHashSet();
 

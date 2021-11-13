@@ -13,11 +13,11 @@ namespace NzCovidPass.Core.Shared
         public bool HasSucceeded => !_failCalled && _succeedCalled;
 
         public bool HasFailed => _failCalled;
-        
-        public IEnumerable<FailureReason> FailureReasons => 
+
+        public IEnumerable<FailureReason> FailureReasons =>
             (IEnumerable<FailureReason>?) _failureReasons ?? Array.Empty<FailureReason>();
 
-        public virtual void Fail() 
+        public virtual void Fail()
         {
             _failCalled = true;
         }
@@ -38,10 +38,10 @@ namespace NzCovidPass.Core.Shared
 
         public virtual void Succeed()
         {
-            _succeedCalled = true;            
+            _succeedCalled = true;
         }
 
-        public override string ToString() 
+        public override string ToString()
         {
             if (HasSucceeded)
             {
@@ -56,6 +56,6 @@ namespace NzCovidPass.Core.Shared
             return $"{GetType().Name}(Succeeded = {HasSucceeded}, Failed = {HasFailed})";
         }
 
-        public readonly record struct FailureReason(string Code, string Message);        
+        public readonly record struct FailureReason(string Code, string Message);
     }
 }

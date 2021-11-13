@@ -21,8 +21,8 @@ namespace NzCovidPass.Core
         /// Attempting to access when <see cref="HasSucceeded" /> is <see langword="false" /> will throw an <see cref="InvalidOperationException" />.
         /// </para>
         /// </remarks>
-        public CborWebToken Token => (HasSucceeded && _token != null) ? 
-            _token : 
+        public CborWebToken Token => (HasSucceeded && _token != null) ?
+            _token :
             throw new InvalidOperationException("Token has not been set.");
 
         /// <summary>
@@ -32,7 +32,7 @@ namespace NzCovidPass.Core
         public void Succeed(CborWebToken token)
         {
             base.Succeed();
-            
+
             _token = token;
         }
 

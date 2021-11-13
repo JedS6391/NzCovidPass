@@ -11,13 +11,13 @@ namespace NzCovidPass.Core
     /// <remarks>
     /// <para>
     /// The New Zealand COVID Pass is a cryptographically signed document which can be represented in the form
-    /// of a QR Code that enables an individual to express proof of having met certain health policy requirements 
+    /// of a QR Code that enables an individual to express proof of having met certain health policy requirements
     /// in regards to COVID-19 such as being vaccinated against the virus.
     /// </para>
     /// <para>
     /// For more details, see <see href="https://nzcp.covid19.health.nz" />.
     /// </para>
-    /// </remarks>    
+    /// </remarks>
     public class PassVerifier
     {
         private readonly ILogger<PassVerifier> _logger;
@@ -77,7 +77,7 @@ namespace NzCovidPass.Core
                 return context;
             }
 
-            // Validate the pass components 
+            // Validate the pass components
             ValidatePassComponents(context, passComponents);
 
             // Read the token to validate its contents and signature
@@ -89,7 +89,7 @@ namespace NzCovidPass.Core
 
                 context.Fail(PassVerifierContext.TokenReadFailed);
 
-                return context;                  
+                return context;
             }
 
             var tokenValidationContext = await _tokenValidator
@@ -105,8 +105,8 @@ namespace NzCovidPass.Core
 
             context.Succeed(token);
 
-            return context;            
-        } 
+            return context;
+        }
 
         private void ValidatePassComponents(PassVerifierContext context, string[] passComponents)
         {
@@ -125,7 +125,7 @@ namespace NzCovidPass.Core
             {
                 _logger.LogError("Version validation failed [Expected = '{Expected}', Actual = '{Actual}']", _verifierOptions.Version, version);
 
-                context.Fail(PassVerifierContext.VersionValidationFailed);             
+                context.Fail(PassVerifierContext.VersionValidationFailed);
             }
 
             if (string.IsNullOrEmpty(payload))
@@ -134,6 +134,6 @@ namespace NzCovidPass.Core
 
                 context.Fail(PassVerifierContext.InvalidPassPayload);
             }
-        } 
+        }
     }
 }

@@ -24,7 +24,7 @@ namespace NzCovidPass.Core
 
         /// <summary>
         /// Gets or sets the collection of valid algorithms that will be used to check against the token's algorithm.
-        /// </summary>        
+        /// </summary>
         public IReadOnlySet<string> ValidAlgorithms { get; set; } = new HashSet<string>();
 
         /// <summary>
@@ -52,7 +52,7 @@ namespace NzCovidPass.Core
 
             /// <summary>
             /// The default valid algorithms.
-            /// </summary>            
+            /// </summary>
             public static readonly string[] ValidAlgorithms = new string[]
             {
                 SecurityAlgorithms.EcdsaSha256

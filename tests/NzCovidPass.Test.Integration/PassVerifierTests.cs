@@ -4,7 +4,6 @@ using Microsoft.Extensions.DependencyInjection;
 using NzCovidPass.Core.Shared;
 using System.Linq;
 using System.Threading.Tasks;
-using NzCovidPass.Core.Cbor;
 using System;
 
 namespace NzCovidPass.Test.Integration;
@@ -48,15 +47,15 @@ public class PassVerifierTests
         Assert.False(result.HasSucceeded);
         Assert.True(result.HasFailed);
         Assert.Throws<InvalidOperationException>(() => result.Token);
-        Assert.NotEmpty(result.FailureReasons);        
-    }    
+        Assert.NotEmpty(result.FailureReasons);
+    }
 
     private static PassVerifier GetVerifier()
     {
         var services = new ServiceCollection();
 
         services.AddNzCovidPassVerifier(
-            options => 
+            options =>
             {
                 var validIssuers = PassVerifierOptions.Defaults.ValidIssuers.ToHashSet();
 

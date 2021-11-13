@@ -14,14 +14,14 @@ namespace NzCovidPass.Core.Verification
             IDecentralizedIdentifierDocumentRetriever decentralizedIdentifierDocumentRetriever)
         {
             _logger = Requires.NotNull(logger);
-            _decentralizedIdentifierDocumentRetriever = Requires.NotNull(decentralizedIdentifierDocumentRetriever);            
+            _decentralizedIdentifierDocumentRetriever = Requires.NotNull(decentralizedIdentifierDocumentRetriever);
         }
 
         public async Task<SecurityKey> GetKeyAsync(string issuer, string keyId)
         {
             _logger.LogDebug("Retrieving key with ID '{KeyId}' for issuer '{Issuer}'", keyId, issuer);
 
-            // See https://nzcp.covid19.health.nz/#example-resolving-an-issuers-identifier-to-their-public-keys            
+            // See https://nzcp.covid19.health.nz/#example-resolving-an-issuers-identifier-to-their-public-keys
             var keyReference = $"{issuer}#{keyId}";
 
             var decentralizedIdentifierDocument = await GetDecentralizedIdentifierDocumentAsync(issuer).ConfigureAwait(false);

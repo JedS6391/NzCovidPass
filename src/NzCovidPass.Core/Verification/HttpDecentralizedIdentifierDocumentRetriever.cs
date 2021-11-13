@@ -18,7 +18,7 @@ namespace NzCovidPass.Core.Verification
         }
 
         public async Task<DecentralizedIdentifierDocument> GetDocumentAsync(string issuer)
-        {            
+        {
             // See https://nzcp.covid19.health.nz/#example-resolving-an-issuers-identifier-to-their-public-keys
             var host = issuer.Replace("did:web:", string.Empty);
             var uriBuilder = new UriBuilder(Uri.UriSchemeHttps, host)
@@ -28,7 +28,7 @@ namespace NzCovidPass.Core.Verification
 
             var client = _httpClientFactory.CreateClient(nameof(HttpDecentralizedIdentifierDocumentRetriever));
 
-            _logger.LogDebug("Retrieving DID document at address '{Address}'", uriBuilder.Uri);            
+            _logger.LogDebug("Retrieving DID document at address '{Address}'", uriBuilder.Uri);
 
             var response = await client
                 .GetAsync(uriBuilder.Uri)

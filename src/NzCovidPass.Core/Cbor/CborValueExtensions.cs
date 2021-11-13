@@ -3,8 +3,8 @@ using Dahomey.Cbor.ObjectModel;
 namespace NzCovidPass.Core.Cbor
 {
     internal static class CborValueExtensions
-    {        
-        public static ReadOnlyMemory<byte> GetValueBytes(this CborValue cborValue) 
+    {
+        public static ReadOnlyMemory<byte> GetValueBytes(this CborValue cborValue)
         {
             ArgumentNullException.ThrowIfNull(cborValue);
 

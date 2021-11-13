@@ -24,8 +24,8 @@ namespace NzCovidPass.Core.Verification
         public IReadOnlyList<string> AssertionMethods { get; private set; }
 
         public override string ToString() => $"{nameof(DecentralizedIdentifierDocument)}(id = {Id})";
-        
-        public class VerificationMethod 
+
+        public class VerificationMethod
         {
             [JsonPropertyName("id")]
             [JsonInclude]
@@ -41,7 +41,7 @@ namespace NzCovidPass.Core.Verification
 
             [JsonPropertyName("publicKeyJwk")]
             [JsonInclude]
-            public JsonWebKey PublicKey { get; private set; }        
+            public JsonWebKey PublicKey { get; private set; }
         }
 
 
@@ -56,7 +56,7 @@ namespace NzCovidPass.Core.Verification
                 };
 
             public override void Write(Utf8JsonWriter writer, IReadOnlyList<string> value, JsonSerializerOptions options) =>
-                throw new NotImplementedException();            
+                throw new NotImplementedException();
         }
     }
 }
