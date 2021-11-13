@@ -1,5 +1,7 @@
 # NZ COVID Pass
 
+[![build][build-image]][build-url]
+
 ## About
 
 Provides the ability to ability to verify New Zealand COVID Pass payloads in .NET.
@@ -52,3 +54,6 @@ The test suite can be run using the following command:
 ```console
 dotnet test
 ```
+
+[build-image]: https://img.shields.io/github/workflow/status/JedS6391/NzCovidPass/CI?style=flat-square
+[build-url]: https://github.com/JedS6391/NzCovidPass/actions/workflows/ci.yml
