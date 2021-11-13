@@ -1,50 +1,68 @@
 using System.Text;
 using Dahomey.Cbor.ObjectModel;
+using Microsoft.IdentityModel.Tokens;
 using NzCovidPass.Core.Shared;
 
 namespace NzCovidPass.Core.Cbor
 {
-    public class CborWebToken
+    public class CborWebToken : SecurityToken
     {
         private readonly Header _header;
         private readonly Payload _payload;
+        private readonly Signature _signature;
 
-        public CborWebToken(Header header, Payload payload)
+        public CborWebToken(Header header, Payload payload, Signature signature)
         {
             _header = Requires.NotNull(header);
             _payload = Requires.NotNull(payload);
+            _signature = Requires.NotNull(signature);
         }
+
+        public override string Id => Jti;
+        public override string Issuer => _payload.Issuer;
+        public override SecurityKey SecurityKey => null;
+        public override SecurityKey SigningKey { get; set; }
+        public override DateTime ValidFrom => NotBefore.Date;
+        public override DateTime ValidTo => Expiry.Date;
 
         public string KeyId => _header.KeyId;
         public string Algorithm => _header.Algorithm;
         public string Jti => _payload.Jti;
-        public Guid Cti => _payload.Cti;
-        public string Issuer => _payload.Issuer;
+        public Guid Cti => _payload.Cti;        
         public DateTimeOffset Expiry => _payload.Expiry;
         public DateTimeOffset NotBefore => _payload.NotBefore;
+        public byte[] HeaderBytes => _header.Bytes;
+        public byte[] PayloadBytes => _payload.Bytes;
+        public byte[] SignatureBytes => _signature.Bytes;
 
         public class Header 
         {
             private readonly CborObject _cborObject;
+            private readonly ReadOnlyMemory<byte> _rawHeader;
 
-            public Header(CborObject cborObject)
+            public Header(CborObject cborObject, ReadOnlyMemory<byte> rawHeader)
             {
                 _cborObject = Requires.NotNull(cborObject);
+                _rawHeader = rawHeader;
             }
 
             // TODO: Improve this
             public string KeyId => Encoding.UTF8.GetString(_cborObject[Constants.Header.KeyId].GetValueBytes().Span);
 
             public string Algorithm => Constants.Header.CoseAlgorithmMap[ReadClaimValue<int>(_cborObject, Constants.Header.Algorithm)];
+
+            public byte[] Bytes => _rawHeader.ToArray();
         }
         
         public class Payload 
         {
             private readonly CborObject _cborObject;
+            private readonly ReadOnlyMemory<byte> _rawPayload;
 
-            public Payload(CborObject cborObject)
+            public Payload(CborObject cborObject, ReadOnlyMemory<byte> rawPayload)
             {
                 _cborObject = Requires.NotNull(cborObject);
+                _rawPayload = rawPayload;
             }
 
             public string Jti => $"urn:uuid:{Cti:D}";
@@ -56,8 +74,22 @@ namespace NzCovidPass.Core.Cbor
 
             public DateTimeOffset Expiry => DateTimeOffset.FromUnixTimeSeconds(ReadClaimValue<int>(_cborObject, Constants.Payload.Exp));
 
-            public DateTimeOffset NotBefore => DateTimeOffset.FromUnixTimeSeconds(ReadClaimValue<int>(_cborObject, Constants.Payload.Nbf));            
+            public DateTimeOffset NotBefore => DateTimeOffset.FromUnixTimeSeconds(ReadClaimValue<int>(_cborObject, Constants.Payload.Nbf));  
+
+            public byte[] Bytes => _rawPayload.ToArray();          
         }
+
+        public class Signature 
+        {
+            private readonly ReadOnlyMemory<byte> _rawSignature;
+
+            public Signature(ReadOnlyMemory<byte> rawSignature)
+            {
+                _rawSignature = rawSignature;
+            }
+
+            public byte[] Bytes => _rawSignature.ToArray();
+        }        
 
         private static T ReadClaimValue<T>(CborObject cborObject, int claimId)
         {

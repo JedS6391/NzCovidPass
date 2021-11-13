@@ -12,9 +12,32 @@ namespace NzCovidPass.Core.Verification
             _decentralizedIdentifierDocumentRetriever = Requires.NotNull(decentralizedIdentifierDocumentRetriever);
         }
 
-        public JsonWebKey GetKeyAsync(string issuer, string keyId)
+        public async Task<JsonWebKey> GetKeyAsync(string issuer, string keyId)
         {
-            return null;
+            var decentralizedIdentifierDocument = await _decentralizedIdentifierDocumentRetriever
+                .GetDocumentAsync(issuer)
+                .ConfigureAwait(false);
+
+            // See https://nzcp.covid19.health.nz/#example-resolving-an-issuers-identifier-to-their-public-keys            
+            var keyReference = $"{issuer}#{keyId}";
+
+            if (!decentralizedIdentifierDocument.AssertionMethods.Contains(keyReference))
+            {
+                // TODO
+                throw new Exception();
+            }
+
+            var verificationMethod = decentralizedIdentifierDocument
+                .VerificationMethods
+                .FirstOrDefault(vm => vm.Id == keyReference);
+
+            if (verificationMethod is null || verificationMethod.Type != "JsonWebKey2020" || verificationMethod.PublicKey is null)
+            {
+                // TODO
+                throw new Exception();
+            }
+
+            return verificationMethod.PublicKey;
         }
     }
 }

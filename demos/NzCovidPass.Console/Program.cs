@@ -12,7 +12,7 @@ var host = Host
         services.AddNzCovidPassVerifier(
             options => 
             {
-                var validIssuers = PassVerifierOptions.Defaults.TrustedIssuers.ToHashSet();
+                var validIssuers = PassVerifierOptions.Defaults.ValidIssuers.ToHashSet();
 
                 // Add test issuer
                 validIssuers.Add("did:web:nzcp.covid19.health.nz");
@@ -20,6 +20,7 @@ var host = Host
                 options.Prefix = PassVerifierOptions.Defaults.Prefix;
                 options.Version = PassVerifierOptions.Defaults.Version;
                 options.ValidIssuers = validIssuers;
+                options.ValidAlgorithms = PassVerifierOptions.Defaults.ValidAlgorithms.ToHashSet();
             }
         );
     })

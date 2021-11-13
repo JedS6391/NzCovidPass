@@ -17,13 +17,22 @@ namespace NzCovidPass.Core.Verification
             _httpClientFactory = Requires.NotNull(httpClientFactory);
         }
 
-        public async Task<DecentralizedIdentifierDocument> GetDocumentAsync()
+        public async Task<DecentralizedIdentifierDocument> GetDocumentAsync(string issuer)
         {            
+            // See https://nzcp.covid19.health.nz/#example-resolving-an-issuers-identifier-to-their-public-keys
+            var address = issuer.Replace("did:web:", string.Empty);
+            var uriBuilder = new UriBuilder(Uri.UriSchemeHttps, address)
+            {
+                Path = ".well-known/did.json"
+            };
+
             var client = _httpClientFactory.CreateClient(nameof(HttpDecentralizedIdentifierDocumentRetriever));
 
-            _logger.LogDebug("Retrieving DID document at base address '{BaseAddress}'", client.BaseAddress);
+            _logger.LogDebug("Retrieving DID document at address '{Address}'", uriBuilder.Uri);            
 
-            var response = await client.GetAsync(".well-known/did.json").ConfigureAwait(false);
+            var response = await client
+                .GetAsync(uriBuilder.Uri)
+                .ConfigureAwait(false);
 
             if (!response.IsSuccessStatusCode)
             {

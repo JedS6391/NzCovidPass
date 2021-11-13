@@ -1,8 +1,8 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 using NzCovidPass.Core.Cbor;
 using NzCovidPass.Core.Shared;
-using NzCovidPass.Core.Verification;
 
 namespace NzCovidPass.Core
 {
@@ -11,91 +11,93 @@ namespace NzCovidPass.Core
         private readonly ILogger<PassVerifier> _logger;
         private readonly PassVerifierOptions _verifierOptions;
         private readonly ICborWebTokenReader _tokenReader;
-        private readonly IVerificationKeyProvider _verificationKeyProvider;
+        private readonly ICborWebTokenValidator _tokenValidator;
 
         public PassVerifier(
             ILogger<PassVerifier> logger,
             IOptions<PassVerifierOptions> verifierOptionsAccessor,
             ICborWebTokenReader tokenReader,
-            IVerificationKeyProvider verificationKeyProvider)
+            ICborWebTokenValidator tokenValidator)
         {
             _logger = Requires.NotNull(logger);
             _verifierOptions = Requires.NotNull(verifierOptionsAccessor).Value;
             _tokenReader = Requires.NotNull(tokenReader);
-            _verificationKeyProvider = Requires.NotNull(verificationKeyProvider);
+            _tokenValidator = Requires.NotNull(tokenValidator);
         }
 
-        public async Task<PassVerifierResult> VerifyAsync(string passPayload)
+        public async Task<PassVerifierContext> VerifyAsync(string passPayload)
         {
             ArgumentNullException.ThrowIfNull(passPayload);
 
-            var result = new PassVerifierResult();
+            var context = new PassVerifierContext();
 
             _logger.LogDebug("Verifying pass payload '{Payload}'", passPayload);
 
             var passComponents = passPayload.Split('/', 3, StringSplitOptions.None);
 
-            if (!string.Equals(passComponents[0], _verifierOptions.Prefix, StringComparison.Ordinal))
+            if (passComponents.Length != 3)
             {
-                _logger.LogError("Prefix validation failed [Expected = '{Expected}', Actual = '{Actual}']", _verifierOptions.Prefix, passComponents[0]);
+                _logger.LogError("Expected 3 components separated by '/' in pass payload");
 
-                result.Fail(PassVerifierResult.PrefixValidationFailed);
+                context.Fail(PassVerifierContext.InvalidPassComponents);
 
-                return result;
+                return context;
             }
 
-            if (!int.TryParse(passComponents[1], out var version) || version != _verifierOptions.Version)
+            var prefix = passComponents[0];
+            var version = passComponents[1];
+            var payload = passComponents[2];
+
+            if (!string.Equals(prefix, _verifierOptions.Prefix, StringComparison.Ordinal))
             {
-                _logger.LogError("Version validation failed [Expected = '{Expected}', Actual = '{Actual}']", _verifierOptions.Version, passComponents[1]);
+                _logger.LogError("Prefix validation failed [Expected = '{Expected}', Actual = '{Actual}']", _verifierOptions.Prefix, prefix);
 
-                result.Fail(PassVerifierResult.VersionValidationFailed);
+                context.Fail(PassVerifierContext.PrefixValidationFailed);
 
-                return result;               
+                return context;
             }
 
-            var base32Payload = AddBase32Padding(passComponents[2]);
-
-            _logger.LogDebug("Decoding base-32 payload '{Payload}'", base32Payload);
-
-            var decodedPayloadBytes = Base32.ToBytes(base32Payload);
-
-            _logger.LogDebug("Decoded base-32 payload bytes (hex) '{Payload}'", Convert.ToHexString(decodedPayloadBytes));
-
-            if (!_tokenReader.TryReadToken(decodedPayloadBytes, out var token))
+            if (!int.TryParse(version, out var versionNumber) || versionNumber != _verifierOptions.Version)
             {
-                _logger.LogError("Token read failed [Decoded Payload Bytes (hex) = '{Payload}']", Convert.ToHexString(decodedPayloadBytes));
+                _logger.LogError("Version validation failed [Expected = '{Expected}', Actual = '{Actual}']", _verifierOptions.Version, version);
 
-                result.Fail(PassVerifierResult.TokenReadFailed);
+                context.Fail(PassVerifierContext.VersionValidationFailed);
 
-                return result;                  
-            };
-
-            if (!_verifierOptions.ValidIssuers.Contains(token.Issuer))
-            {
-                _logger.LogError("Issuer validation failed [Expected = '{{ {Expected} }}', Actual = '{Actual}']", string.Join(", ", _verifierOptions.ValidIssuers), token.Issuer);
-
-                result.Fail(PassVerifierResult.IssuerValidationFailed);
-
-                return result;                 
+                return context;               
             }
 
-            var verificationKey = _verificationKeyProvider.GetKeyAsync(token.Issuer, token.KeyId);
-
-            result.Succeed(token);
-
-            return result;            
-        } 
-
-        private string AddBase32Padding(string base32Payload)
-        {
-            var unpaddedLength = base32Payload.Length % 8;
-
-            if (unpaddedLength != 0) 
+            if (string.IsNullOrEmpty(payload))
             {
-                base32Payload += new string('=', count: 8 - unpaddedLength);
+                _logger.LogError("Invalid pass payload.");
+
+                context.Fail(PassVerifierContext.InvalidPassPayload);
+
+                return context;
             }
 
-            return base32Payload;
-        }    
+            if (!_tokenReader.TryReadToken(payload, out var token))
+            {
+                _logger.LogError("Token read failed [Payload = '{Payload}']", payload);
+
+                context.Fail(PassVerifierContext.TokenReadFailed);
+
+                return context;                  
+            }
+
+            var tokenValidationContext = await _tokenValidator
+                .ValidateTokenAsync(token)
+                .ConfigureAwait(false);
+
+            if (tokenValidationContext.HasFailed)
+            {
+                context.Fail(PassVerifierContext.TokenValidationFailed);
+
+                return context;
+            }
+
+            context.Succeed(token);
+
+            return context;            
+        }  
     }
 }

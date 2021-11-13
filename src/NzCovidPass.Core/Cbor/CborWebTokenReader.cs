@@ -14,23 +14,35 @@ namespace NzCovidPass.Core.Cbor
             _logger = Requires.NotNull(logger);
         }
 
-        public bool TryReadToken(byte[] data, out CborWebToken? token)
+        public bool TryReadToken(string base32Payload, out CborWebToken? token)
         {
-            ArgumentNullException.ThrowIfNull(data);
+            ArgumentNullException.ThrowIfNull(base32Payload);
+
+            base32Payload = AddBase32Padding(base32Payload);
+
+            _logger.LogDebug("Decoding base-32 payload '{Payload}'", base32Payload);
+
+            var decodedPayloadBytes = Base32.ToBytes(base32Payload);
+
+            _logger.LogDebug("Decoded base-32 payload bytes (hex) '{Payload}'", Convert.ToHexString(decodedPayloadBytes));            
 
             try 
             {                
-                var decodedCborStructure = Dahomey.Cbor.Cbor.Deserialize<CborArray>(data);
+                var decodedCborStructure = Dahomey.Cbor.Cbor.Deserialize<CborArray>(decodedPayloadBytes);
                 
                 _logger.LogDebug("Decoded CBOR structure: {Structure}", decodedCborStructure);
 
-                var encodedHeaderBytes = decodedCborStructure[0].GetValueBytes();
-                var encodedPayloadBytes = decodedCborStructure[2].GetValueBytes();              
-                  
-                var header = Dahomey.Cbor.Cbor.Deserialize<CborObject>(encodedHeaderBytes.Span);
-                var payload = Dahomey.Cbor.Cbor.Deserialize<CborObject>(encodedPayloadBytes.Span);
+                var rawHeaderBytes = decodedCborStructure[0].GetValueBytes();
+                var rawPayloadBytes = decodedCborStructure[2].GetValueBytes();
+                var rawSignatureBytes = decodedCborStructure[3].GetValueBytes();
 
-                token = new CborWebToken(new CborWebToken.Header(header), new CborWebToken.Payload(payload));
+                var header = Dahomey.Cbor.Cbor.Deserialize<CborObject>(rawHeaderBytes.Span);
+                var payload = Dahomey.Cbor.Cbor.Deserialize<CborObject>(rawPayloadBytes.Span);
+                
+                token = new CborWebToken(
+                    new CborWebToken.Header(header, rawHeaderBytes),
+                    new CborWebToken.Payload(payload, rawPayloadBytes),
+                    new CborWebToken.Signature(rawSignatureBytes));
 
                 return true;
             }
@@ -43,5 +55,17 @@ namespace NzCovidPass.Core.Cbor
                 return false;
             }
         }
+
+        private string AddBase32Padding(string base32Payload)
+        {
+            var unpaddedLength = base32Payload.Length % 8;
+
+            if (unpaddedLength != 0) 
+            {
+                base32Payload += new string('=', count: 8 - unpaddedLength);
+            }
+
+            return base32Payload;
+        } 
     }
 }

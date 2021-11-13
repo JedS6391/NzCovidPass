@@ -5,9 +5,9 @@ using NzCovidPass.Core.Verification;
 namespace NzCovidPass.Core.Shared
 {
     public static class ServiceCollectionExtensions
-    {            
+    {
         public static IServiceCollection AddNzCovidPassVerifier(
-            this IServiceCollection services, 
+            this IServiceCollection services,
             Action<PassVerifierOptions>? configureOptions = null,
             Action<HttpClient>? configureClient = null)
         {
@@ -18,6 +18,7 @@ namespace NzCovidPass.Core.Shared
             services.AddHttpClient(nameof(HttpDecentralizedIdentifierDocumentRetriever), configureClient ?? ConfigureDefaultClient);
 
             services.AddSingleton<ICborWebTokenReader, CborWebTokenReader>();
+            services.AddSingleton<ICborWebTokenValidator, CborWebTokenValidator>();
             services.AddSingleton<IVerificationKeyProvider, VerificationKeyProvider>();
             services.AddSingleton<IDecentralizedIdentifierDocumentRetriever, HttpDecentralizedIdentifierDocumentRetriever>();
             services.AddSingleton<PassVerifier>();
@@ -29,12 +30,12 @@ namespace NzCovidPass.Core.Shared
         {
             options.Prefix = PassVerifierOptions.Defaults.Prefix;
             options.Version = PassVerifierOptions.Defaults.Version;
-            options.ValidIssuers = PassVerifierOptions.Defaults.TrustedIssuers.ToHashSet();
+            options.ValidIssuers = PassVerifierOptions.Defaults.ValidIssuers.ToHashSet();
+            options.ValidAlgorithms = PassVerifierOptions.Defaults.ValidAlgorithms.ToHashSet();
         }
 
-        private static void ConfigureDefaultClient(HttpClient client)
-        {
-            client.BaseAddress = new Uri("https://nzcp.identity.health.nz");
+        private static void ConfigureDefaultClient(HttpClient client) 
+        {            
         }
-    }
+}
 }   
