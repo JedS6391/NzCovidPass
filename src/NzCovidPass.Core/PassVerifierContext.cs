@@ -5,7 +5,7 @@ using NzCovidPass.Core.Shared;
 namespace NzCovidPass.Core
 {
     /// <summary>
-    /// Encapsulates details of the verification process.
+    /// Encapsulates details of the pass verification process.
     /// </summary>
     public class PassVerifierContext : ValidationContext
     {

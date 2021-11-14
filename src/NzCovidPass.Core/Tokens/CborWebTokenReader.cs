@@ -5,15 +5,21 @@ using NzCovidPass.Core.Shared;
 
 namespace NzCovidPass.Core.Tokens
 {
+    /// <inheritdoc cref="ICborWebTokenReader" />
     public class CborWebTokenReader : ICborWebTokenReader
     {
         private readonly ILogger<CborWebTokenReader> _logger;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="CborWebTokenReader" /> class.
+        /// </summary>
+        /// <param name="logger">An <see cref="ILogger{TCategoryName}" /> instance used for writing log messages.</param>
         public CborWebTokenReader(ILogger<CborWebTokenReader> logger)
         {
             _logger = Requires.NotNull(logger);
         }
 
+        /// <inheritdoc />
         public bool TryReadToken(string base32Payload, out CborWebToken? token)
         {
             ArgumentNullException.ThrowIfNull(base32Payload);
@@ -28,7 +34,7 @@ namespace NzCovidPass.Core.Tokens
 
             try
             {
-                var decodedCborStructure = Dahomey.Cbor.Cbor.Deserialize<CborArray>(decodedPayloadBytes);
+                var decodedCborStructure = Cbor.Deserialize<CborArray>(decodedPayloadBytes);
 
                 _logger.LogDebug("Decoded CBOR structure: {Structure}", decodedCborStructure);
 
@@ -36,8 +42,8 @@ namespace NzCovidPass.Core.Tokens
                 var rawPayloadBytes = decodedCborStructure[2].GetValueBytes();
                 var rawSignatureBytes = decodedCborStructure[3].GetValueBytes();
 
-                var header = Dahomey.Cbor.Cbor.Deserialize<CborObject>(rawHeaderBytes.Span);
-                var payload = Dahomey.Cbor.Cbor.Deserialize<CborObject>(rawPayloadBytes.Span);
+                var header = Cbor.Deserialize<CborObject>(rawHeaderBytes.Span);
+                var payload = Cbor.Deserialize<CborObject>(rawPayloadBytes.Span);
 
                 token = new CborWebToken(
                     new CborWebToken.Header(header, rawHeaderBytes),

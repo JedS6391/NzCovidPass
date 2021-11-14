@@ -1,4 +1,5 @@
 using System.Buffers;
+using Dahomey.Cbor.Serialization;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -7,12 +8,21 @@ using NzCovidPass.Core.Verification;
 
 namespace NzCovidPass.Core.Tokens
 {
+    /// <summary>
+    /// An <see cref="ICborWebTokenValidator" /> implementation that applies the validation rules outlined in <see href="https://nzcp.covid19.health.nz/#steps-to-verify-a-new-zealand-covid-pass" />.
+    /// </summary>
     public class CborWebTokenValidator : ICborWebTokenValidator
     {
         private readonly ILogger<CborWebTokenValidator> _logger;
         private readonly PassVerifierOptions _verifierOptions;
         private readonly IVerificationKeyProvider _verificationKeyProvider;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="CborWebTokenValidator" /> class.
+        /// </summary>
+        /// <param name="logger">An <see cref="ILogger{TCategoryName}" /> instance used for writing log messages.</param>
+        /// <param name="verifierOptionsAccessor">An accessor for <see cref="PassVerifierOptions" /> instances.</param>
+        /// <param name="verificationKeyProvider">A <see cref="IVerificationKeyProvider" /> instance used to obtain keys for signature validation.</param>
         public CborWebTokenValidator(
             ILogger<CborWebTokenValidator> logger,
             IOptions<PassVerifierOptions> verifierOptionsAccessor,
@@ -23,6 +33,7 @@ namespace NzCovidPass.Core.Tokens
             _verificationKeyProvider = Requires.NotNull(verificationKeyProvider);
         }
 
+        /// <inheritdoc />
         public async Task ValidateTokenAsync(CborWebTokenValidatorContext context)
         {
             ArgumentNullException.ThrowIfNull(context);
@@ -197,8 +208,9 @@ namespace NzCovidPass.Core.Tokens
         private static byte[] GetSignedBytes(CborWebToken token)
         {
             // https://datatracker.ietf.org/doc/html/rfc8152#section-4.4
+            // Note this process assumes a COSE_Sign1 structure, which NZ Covid passes will be.
             var b = new ArrayBufferWriter<byte>();
-            var w = new Dahomey.Cbor.Serialization.CborWriter(b);
+            var w = new CborWriter(b);
 
             w.WriteBeginArray(4);
 

@@ -11,6 +11,10 @@ namespace NzCovidPass.Core.Tokens
     /// A <see cref="SecurityToken" /> designed for representing a CBOR Web Token (CWT).
     /// </summary>
     /// <remarks>
+    /// <para>
+    /// The properties exposed by this class are modelled on the structure described in <see href="https://nzcp.covid19.health.nz" />,
+    /// as opposed to a more generic CWT structure.
+    /// </para>
     /// <see href="https://datatracker.ietf.org/doc/html/rfc8392" />
     /// </remarks>
     public class CborWebToken : SecurityToken
@@ -32,79 +36,234 @@ namespace NzCovidPass.Core.Tokens
             _signature = Requires.NotNull(signature);
         }
 
+        /// <inheritdoc />
         public override string Id => Jti;
+
+        /// <inheritdoc />
         public override string Issuer => _payload.Issuer;
+
+        /// <inheritdoc />
         public override SecurityKey SecurityKey => null;
+
+        /// <inheritdoc />
         public override SecurityKey SigningKey { get; set; }
+
+        /// <inheritdoc />
         public override DateTime ValidFrom => NotBefore.Date;
+
+        /// <inheritdoc />
         public override DateTime ValidTo => Expiry.Date;
 
+        /// <summary>
+        /// Gets the identifier of the key used to sign the token from the CWT header.
+        /// </summary>
         public string KeyId => _header.KeyId;
+
+        /// <summary>
+        /// Gets the algorithm used to sign the token from the CWT header.
+        /// </summary>
         public string Algorithm => _header.Algorithm;
+
+        /// <summary>
+        /// Gets the value of the <c>cti</c> claim from the CWT payload, mapped to a JTI value.
+        /// </summary>
+        /// <remarks>
+        /// <see href="https://nzcp.covid19.health.nz/#mapping-jti-cti" />
+        /// </remarks>
         public string Jti => _payload.Jti;
+
+        /// <summary>
+        /// Gets the value of the <c>cti</c> claim from the CWT payload.
+        /// </summary>
+        /// <remarks>
+        /// <see href="https://datatracker.ietf.org/doc/html/rfc8392#section-3.1.7" />
+        /// </remarks>
         public Guid Cti => _payload.Cti;
+
+        /// <summary>
+        /// Gets the value of the <c>exp</c> claim from the CWT payload.
+        /// </summary>
+        /// <remarks>
+        /// <see href="https://datatracker.ietf.org/doc/html/rfc8392#section-3.1.4" />
+        /// </remarks>
         public DateTimeOffset Expiry => _payload.Expiry;
+
+        /// <summary>
+        /// Gets the value of the <c>nbf</c> claim from the CWT payload.
+        /// </summary>
+        /// <remarks>
+        /// <see href="https://datatracker.ietf.org/doc/html/rfc8392#section-3.1.5" />
+        /// </remarks>
         public DateTimeOffset NotBefore => _payload.NotBefore;
+
+        /// <summary>
+        /// Gets the value of the <c>vc</c> claim from the CWT payload.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// The content of the claim is deserialized based on the structure described in <see href="https://nzcp.covid19.health.nz/#publiccovidpass" />.
+        /// </para>
+        /// <see href="https://nzcp.covid19.health.nz/#cwt-claims" />
+        /// </remarks>
         public PublicCovidPass Credentials => _payload.Credentials;
+
+        /// <summary>
+        /// Gets the raw bytes of the CWT header.
+        /// </summary>
         public byte[] HeaderBytes => _header.Bytes;
+
+        /// <summary>
+        /// Gets the raw bytes of the CWT payload.
+        /// </summary>
         public byte[] PayloadBytes => _payload.Bytes;
+
+        /// <summary>
+        /// Gets the raw bytes of the CWT signature.
+        /// </summary>
         public byte[] SignatureBytes => _signature.Bytes;
 
+        /// <summary>
+        /// Represents the protected header of a CWT.
+        /// </summary>
+        /// <remarks>
+        /// <see href="https://datatracker.ietf.org/doc/html/rfc8152#section-2" />
+        /// </remarks>
         public class Header
         {
             private readonly CborObject _cborObject;
             private readonly ReadOnlyMemory<byte> _rawHeader;
 
+            /// <summary>
+            /// Initializes a new instance of the <see cref="Header" /> class.
+            /// </summary>
+            /// <param name="cborObject">The CBOR object representing the header.</param>
+            /// <param name="rawHeader">The raw bytes of the header.</param>
             public Header(CborObject cborObject, ReadOnlyMemory<byte> rawHeader)
             {
                 _cborObject = Requires.NotNull(cborObject);
                 _rawHeader = rawHeader;
             }
 
-            // TODO: Improve this
-            public string KeyId => Encoding.UTF8.GetString(_cborObject[Constants.Header.KeyId].GetValueBytes().Span);
+            /// <summary>
+            /// Gets the identifier of the key used to sign the token.
+            /// </summary>
+            public string KeyId
+            {
+                get
+                {
+                    var keyIdBytes = _cborObject[Constants.Header.KeyId].GetValueBytes();
 
-            public string Algorithm => Constants.Header.CoseAlgorithmMap[ReadClaimValue<int>(_cborObject, Constants.Header.Algorithm)];
+                    return Encoding.UTF8.GetString(keyIdBytes.Span);
+                }
+            }
 
+            /// <summary>
+            /// Gets the algorithm used to sign the token.
+            /// </summary>
+            public string Algorithm
+            {
+                get
+                {
+                    var algorithm = ReadClaimValue<int>(_cborObject, Constants.Header.Algorithm);
+
+                    return Constants.Header.CoseAlgorithmMap[algorithm];
+                }
+            }
+
+            /// <summary>
+            /// Gets the raw header bytes.
+            /// </summary>
             public byte[] Bytes => _rawHeader.ToArray();
         }
 
+        /// <summary>
+        /// Represents the payload of a CWT.
+        /// </summary>
+        /// <remarks>
+        /// <see href="https://datatracker.ietf.org/doc/html/rfc8392" />
+        /// </remarks>
         public class Payload
         {
             private readonly CborObject _cborObject;
             private readonly ReadOnlyMemory<byte> _rawPayload;
 
+            /// <summary>
+            /// Initializes a new instance of the <see cref="Header" /> class.
+            /// </summary>
+            /// <param name="cborObject">The CBOR object representing the payload.</param>
+            /// <param name="rawPayload">The raw bytes of the payload.</param>
             public Payload(CborObject cborObject, ReadOnlyMemory<byte> rawPayload)
             {
                 _cborObject = Requires.NotNull(cborObject);
                 _rawPayload = rawPayload;
             }
 
+            /// <summary>
+            /// Gets the value of the <c>cti</c> claim, mapped to a JTI value.
+            /// </summary>
             public string Jti => $"urn:uuid:{Cti:D}";
 
-            // TODO: Improve this
-            public Guid Cti => new Guid(_cborObject[Constants.Payload.Cti].GetValueBytes().Span);
+            /// <summary>
+            /// Gets the value of the <c>cti</c> claim.
+            /// </summary>
+            public Guid Cti
+            {
+                get
+                {
+                    var ctiBytes = _cborObject[Constants.Payload.Cti].GetValueBytes();
 
+                    return new Guid(ctiBytes.Span);
+                }
+            }
+
+            /// <summary>
+            /// Gets the value of <c>iss</c> claim.
+            /// </summary>
             public string Issuer => ReadClaimValue<string>(_cborObject, Constants.Payload.Iss);
 
+            /// <summary>
+            /// Gets the value of <c>exp</c> claim.
+            /// </summary>
             public DateTimeOffset Expiry => DateTimeOffset.FromUnixTimeSeconds(ReadClaimValue<int>(_cborObject, Constants.Payload.Exp));
 
+            /// <summary>
+            /// Gets the value of <c>nbf</c> claim.
+            /// </summary>
             public DateTimeOffset NotBefore => DateTimeOffset.FromUnixTimeSeconds(ReadClaimValue<int>(_cborObject, Constants.Payload.Nbf));
 
+            /// <summary>
+            /// Gets the value of <c>vc</c> claim.
+            /// </summary>
             public PublicCovidPass? Credentials => JsonSerializer.Deserialize<PublicCovidPass>(ReadClaimValueAsString(_cborObject, Constants.Payload.Vc));
 
+            /// <summary>
+            /// Gets the raw payload bytes.
+            /// </summary>
             public byte[] Bytes => _rawPayload.ToArray();
         }
 
+        /// <summary>
+        /// Represents the signature of a CWT.
+        /// </summary>
+        /// <remarks>
+        /// <see href="https://datatracker.ietf.org/doc/html/rfc8392" />
+        /// </remarks>
         public class Signature
         {
             private readonly ReadOnlyMemory<byte> _rawSignature;
 
+            /// <summary>
+            /// Initializes a new instance of the <see cref="Signature" /> class.
+            /// </summary>
+            /// <param name="rawSignature">The raw bytes of the signature.</param>
             public Signature(ReadOnlyMemory<byte> rawSignature)
             {
                 _rawSignature = rawSignature;
             }
 
+            /// <summary>
+            /// Gets the raw signature bytes.
+            /// </summary>
             public byte[] Bytes => _rawSignature.ToArray();
         }
 
