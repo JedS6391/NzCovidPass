@@ -11,6 +11,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{996174DB
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NzCovidPass.Test.Integration", "tests\NzCovidPass.Test.Integration\NzCovidPass.Test.Integration.csproj", "{C0594645-4DDC-4B31-9709-068E07CF65FE}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NzCovidPass.Test.Unit", "tests\NzCovidPass.Test.Unit\NzCovidPass.Test.Unit.csproj", "{C08AA3EA-2296-4876-81D7-6D22E49FCC4E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -32,8 +34,13 @@ Global
 		{C0594645-4DDC-4B31-9709-068E07CF65FE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C0594645-4DDC-4B31-9709-068E07CF65FE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C0594645-4DDC-4B31-9709-068E07CF65FE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C08AA3EA-2296-4876-81D7-6D22E49FCC4E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C08AA3EA-2296-4876-81D7-6D22E49FCC4E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C08AA3EA-2296-4876-81D7-6D22E49FCC4E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C08AA3EA-2296-4876-81D7-6D22E49FCC4E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{C0594645-4DDC-4B31-9709-068E07CF65FE} = {996174DB-2096-4B8F-849D-AF28868C3055}
+		{C08AA3EA-2296-4876-81D7-6D22E49FCC4E} = {996174DB-2096-4B8F-849D-AF28868C3055}
 	EndGlobalSection
 EndGlobal

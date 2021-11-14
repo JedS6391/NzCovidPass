@@ -1,10 +1,10 @@
-using Xunit;
-using NzCovidPass.Core;
 using Microsoft.Extensions.DependencyInjection;
+using NzCovidPass.Core;
 using NzCovidPass.Core.Shared;
 using System.Linq;
 using System.Threading.Tasks;
 using System;
+using Xunit;
 
 namespace NzCovidPass.Test.Integration;
 

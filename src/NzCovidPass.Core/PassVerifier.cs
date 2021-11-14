@@ -66,7 +66,7 @@ namespace NzCovidPass.Core
             _logger.LogDebug("Verifying pass payload '{Payload}'", passPayload);
 
             // Check the payload adheres to expected format.
-            var passComponents = passPayload.Split('/', 3, StringSplitOptions.None);
+            var passComponents = passPayload.Split('/', StringSplitOptions.None);
 
             if (passComponents.Length != 3)
             {
@@ -77,7 +77,6 @@ namespace NzCovidPass.Core
                 return context;
             }
 
-            // Validate the pass components
             ValidatePassComponents(context, passComponents);
 
             // Read the token to validate its contents and signature
