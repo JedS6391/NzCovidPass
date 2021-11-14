@@ -6,7 +6,7 @@
 
 ## About
 
-Provides the ability to ability to verify New Zealand COVID Pass payloads in .NET.
+Provides the ability to ability to verify [New Zealand COVID Pass](https://nzcp.covid19.health.nz/) payloads in .NET.
 
 ## Usage
 
