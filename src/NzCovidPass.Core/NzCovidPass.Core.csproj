@@ -5,7 +5,7 @@
     <Title>NzCovidPass.Core</Title>
     <PackageDescription>Provides the ability to ability to verify New Zealand COVID Pass payloads in .NET.</PackageDescription>
     <PackageId>NzCovidPass.Core</PackageId>
-    <Version>0.0.1</Version>
+    <Version>0.1.0</Version>
     <Authors>Jed Simson</Authors>
     <PackageTags>nz covid-19 verification</PackageTags>
     <RepositoryUrl>https://github.com/JedS6391/NzCovidPass</RepositoryUrl> 
