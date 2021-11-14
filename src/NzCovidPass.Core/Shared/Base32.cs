@@ -8,6 +8,11 @@ namespace NzCovidPass.Core.Shared
     /// </remarks>
     internal class Base32
     {
+        private const string Symbols = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+        private const int BitsPerSymbol = 5;
+        private const int BitsPerByte = 8;
+        private const int SymbolMask = 31; // 2^5 - 1
+
         /// <summary>
         /// Converts <paramref name="input" /> which encodes binary data as base-32 digits,
         /// to an equivalent 8-bit unsigned integer array.
@@ -18,65 +23,47 @@ namespace NzCovidPass.Core.Shared
         {
             ArgumentNullException.ThrowIfNull(input);
 
-            // Remove padding characters
-            input = input.TrimEnd('=');
+            if (input.Length == 0)
+            {
+                return Array.Empty<byte>();
+            }
 
-            var byteCount = input.Length * 5 / 8;
+            var byteCount = input.Length * BitsPerSymbol / BitsPerByte;
             var decodedOutput = new byte[byteCount];
 
-            byte currentByte = 0, bitsRemaining = 8;
-            int mask = 0, index = 0;
+            byte bitsRemaining = 0;
+            int buffer = 0, index = 0;
 
             foreach (var c in input)
             {
-                var characterValue = CharToValue(c);
-
-                if (bitsRemaining > 5)
+                // Ignore padding characters
+                if (c == '=')
                 {
-                    mask = characterValue << (bitsRemaining - 5);
-                    currentByte = (byte) (currentByte | mask);
-                    bitsRemaining -= 5;
+                    continue;
                 }
-                else
-                {
-                    mask = characterValue >> (5 - bitsRemaining);
-                    currentByte = (byte) (currentByte | mask);
-                    decodedOutput[index++] = currentByte;
-                    currentByte = (byte) (characterValue << (3 + bitsRemaining));
-                    bitsRemaining += 3;
-                }
-            }
 
-            // Didn't end with a full byte
-            if (index != byteCount)
-            {
-                decodedOutput[index] = currentByte;
+                var symbolIndex = Symbols.IndexOf(c);
+
+                if (symbolIndex == -1)
+                {
+                    throw new FormatException($"'{c}' is not a valid base-32 character.");
+                }
+
+                var symbolByte = (byte) symbolIndex;
+
+                buffer <<= BitsPerSymbol;
+                buffer |= symbolByte & SymbolMask;
+                bitsRemaining += BitsPerSymbol;
+
+                if (bitsRemaining >= BitsPerByte)
+                {
+                    var b = (byte) (buffer >> (bitsRemaining - BitsPerByte));
+                    decodedOutput[index++] = b;
+                    bitsRemaining -= BitsPerByte;
+                }
             }
 
             return decodedOutput;
-        }
-
-        private static int CharToValue(char c)
-        {
-            var value = (int) c;
-
-            //65-90 == uppercase letters
-            if (value < 91 && value > 64)
-            {
-                return value - 65;
-            }
-            //50-55 == numbers 2-7
-            if (value < 56 && value > 49)
-            {
-                return value - 24;
-            }
-            //97-122 == lowercase letters
-            if (value < 123 && value > 96)
-            {
-                return value - 97;
-            }
-
-            throw new ArgumentException("Character is not a Base32 character.", nameof(c));
         }
     }
 }

@@ -26,14 +26,14 @@ namespace NzCovidPass.Core.Tokens
 
             base32Payload = AddBase32Padding(base32Payload);
 
-            _logger.LogDebug("Decoding base-32 payload '{Payload}'", base32Payload);
-
-            var decodedPayloadBytes = Base32.ToBytes(base32Payload);
-
-            _logger.LogDebug("Decoded base-32 payload bytes (hex) '{Payload}'", Convert.ToHexString(decodedPayloadBytes));
-
             try
             {
+                _logger.LogDebug("Decoding base-32 payload '{Payload}'", base32Payload);
+
+                var decodedPayloadBytes = Base32.ToBytes(base32Payload);
+
+                _logger.LogDebug("Decoded base-32 payload bytes (hex) '{Payload}'", Convert.ToHexString(decodedPayloadBytes));
+
                 var decodedCborStructure = Cbor.Deserialize<CborArray>(decodedPayloadBytes);
 
                 _logger.LogDebug("Decoded CBOR structure: {Structure}", decodedCborStructure);
@@ -51,6 +51,14 @@ namespace NzCovidPass.Core.Tokens
                     new CborWebToken.Signature(rawSignatureBytes));
 
                 return true;
+            }
+            catch (FormatException formatException)
+            {
+                _logger.LogError(formatException, "Failed to decode base-32 payload.");
+
+                token = null;
+
+                return false;
             }
             catch (CborException cborException)
             {
