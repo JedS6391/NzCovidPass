@@ -1,6 +1,8 @@
 # NZ COVID Pass
 
+[![nuget][nuget-image]][nuget-url]
 [![build][build-image]][build-url]
+[![code-coverage][code-coverage-image]][code-coverage-url]
 
 ## About
 
@@ -58,5 +60,9 @@ The test suite can be run using the following command:
 dotnet test
 ```
 
+[nuget-image]: https://img.shields.io/nuget/v/NzCovidPass.Core?style=flat-square
+[nuget-url]: https://www.nuget.org/packages/NzCovidPass.Core
 [build-image]: https://img.shields.io/github/workflow/status/JedS6391/NzCovidPass/CI?style=flat-square
 [build-url]: https://github.com/JedS6391/NzCovidPass/actions/workflows/ci.yml
+[code-coverage-image]: https://img.shields.io/codecov/c/github/JedS6391/NzCovidPass?style=flat-square
+[code-coverage-url]: https://app.codecov.io/gh/JedS6391/NzCovidPass
