@@ -11,6 +11,8 @@ var host = Host
     .ConfigureLogging(logging => logging.SetMinimumLevel(LogLevel.Debug))
     .ConfigureServices((_, services) =>
     {
+        services.AddMemoryCache();
+
         services.AddNzCovidPassVerifier(
             options =>
             {

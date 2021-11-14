@@ -13,6 +13,7 @@ Provides the ability to ability to verify [New Zealand COVID Pass](https://nzcp.
 ```cs
 var services = new ServiceCollection();
 
+services.AddMemoryCache();
 services.AddNzCovidPassVerifier();
 
 var provider = services.BuildServiceProvider();

@@ -1,4 +1,6 @@
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using NzCovidPass.Core.Models;
 using NzCovidPass.Core.Shared;
@@ -13,28 +15,42 @@ namespace NzCovidPass.Core.Verification
         private const string ValidVerificationMethodType = "JsonWebKey2020";
 
         private readonly ILogger<DecentralizedIdentifierDocumentVerificationKeyProvider> _logger;
+        private readonly PassVerifierOptions _verifierOptions;
         private readonly IDecentralizedIdentifierDocumentRetriever _decentralizedIdentifierDocumentRetriever;
+        private readonly IMemoryCache _securityKeyCache;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="DecentralizedIdentifierDocumentVerificationKeyProvider" /> class.
         /// </summary>
         /// <param name="logger">An <see cref="ILogger{TCategoryName}" /> instance used for writing log messages.</param>
+        /// <param name="verifierOptionsAccessor">An accessor for <see cref="PassVerifierOptions" /> instances.</param>
         /// <param name="decentralizedIdentifierDocumentRetriever">An <see cref="IDecentralizedIdentifierDocumentRetriever" /> instance used to obtain DID documents.</param>
+        /// <param name="securityKeyCache">An <see cref="IMemoryCache" /> used for temporarily store resolved keys.</param>
         public DecentralizedIdentifierDocumentVerificationKeyProvider(
             ILogger<DecentralizedIdentifierDocumentVerificationKeyProvider> logger,
-            IDecentralizedIdentifierDocumentRetriever decentralizedIdentifierDocumentRetriever)
+            IOptions<PassVerifierOptions> verifierOptionsAccessor,
+            IDecentralizedIdentifierDocumentRetriever decentralizedIdentifierDocumentRetriever,
+            IMemoryCache securityKeyCache)
         {
             _logger = Requires.NotNull(logger);
+            _verifierOptions = Requires.NotNull(verifierOptionsAccessor).Value;
             _decentralizedIdentifierDocumentRetriever = Requires.NotNull(decentralizedIdentifierDocumentRetriever);
+            _securityKeyCache = Requires.NotNull(securityKeyCache);
         }
 
         /// <inheritdoc />
         public async Task<SecurityKey> GetKeyAsync(string issuer, string keyId)
         {
-            _logger.LogDebug("Retrieving key with ID '{KeyId}' for issuer '{Issuer}'", keyId, issuer);
+            var keyReference = GenerateKeyReference(issuer, keyId);
 
-            // See https://nzcp.covid19.health.nz/#example-resolving-an-issuers-identifier-to-their-public-keys
-            var keyReference = $"{issuer}#{keyId}";
+            if (_securityKeyCache.TryGetValue<SecurityKey>(keyReference, out var securityKey))
+            {
+                _logger.LogDebug("Obtained key with ID '{KeyId}' for issuer '{Issuer}' from cache.", keyId, issuer);
+
+                return securityKey;
+            }
+
+            _logger.LogDebug("Retrieving key with ID '{KeyId}' for issuer '{Issuer}'", keyId, issuer);
 
             var decentralizedIdentifierDocument = await GetDecentralizedIdentifierDocumentAsync(issuer).ConfigureAwait(false);
 
@@ -56,7 +72,11 @@ namespace NzCovidPass.Core.Verification
                 throw new VerificationKeyNotFoundException($"Unable to retrieve key '{keyReference}'.");
             }
 
-            return verificationMethod.PublicKey;
+            var key = verificationMethod.PublicKey;
+
+            _securityKeyCache.Set(keyReference, key, absoluteExpirationRelativeToNow: _verifierOptions.SecurityKeyCacheTime);
+
+            return key;
         }
 
         private async Task<DecentralizedIdentifierDocument> GetDecentralizedIdentifierDocumentAsync(string issuer)
@@ -74,5 +94,8 @@ namespace NzCovidPass.Core.Verification
                 throw new VerificationKeyNotFoundException($"Unable to retrieve key.");
             }
         }
+
+        // See https://nzcp.covid19.health.nz/#example-resolving-an-issuers-identifier-to-their-public-keys
+        private static string GenerateKeyReference(string issuer, string keyId) => $"{issuer}#{keyId}";
     }
 }

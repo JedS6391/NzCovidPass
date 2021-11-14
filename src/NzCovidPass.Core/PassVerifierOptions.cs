@@ -28,6 +28,11 @@ namespace NzCovidPass.Core
         public IReadOnlySet<string> ValidAlgorithms { get; set; } = new HashSet<string>();
 
         /// <summary>
+        /// Gets or sets the amount of time to cache security keys for.
+        /// </summary>
+        public TimeSpan SecurityKeyCacheTime { get; set; } = TimeSpan.FromMinutes(5);
+
+        /// <summary>
         /// Defines default values for <see cref="PassVerifierOptions" />.
         /// </summary>
         public static class Defaults

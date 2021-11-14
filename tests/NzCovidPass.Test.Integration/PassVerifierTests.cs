@@ -1,15 +1,22 @@
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using NzCovidPass.Core;
 using NzCovidPass.Core.Shared;
-using System.Linq;
-using System.Threading.Tasks;
-using System;
 using Xunit;
 
 namespace NzCovidPass.Test.Integration;
 
 public class PassVerifierTests
 {
+    private readonly ServiceProvider _serviceProvider;
+
+    public PassVerifierTests()
+    {
+        _serviceProvider = CreateServiceProvider();
+    }
+
     [Fact]
     public async Task VerifyAsync_ValidPass_ReturnsSuccessResult()
     {
@@ -56,9 +63,13 @@ public class PassVerifierTests
         Assert.NotEmpty(result.FailureReasons);
     }
 
-    private static PassVerifier GetVerifier()
+    private PassVerifier GetVerifier() => _serviceProvider.GetRequiredService<PassVerifier>();
+
+    private static ServiceProvider CreateServiceProvider()
     {
         var services = new ServiceCollection();
+
+        services.AddMemoryCache();
 
         services.AddNzCovidPassVerifier(
             options =>
@@ -75,9 +86,7 @@ public class PassVerifierTests
             }
         );
 
-        var provider = services.BuildServiceProvider();
-
-        return provider.GetRequiredService<PassVerifier>();
+        return services.BuildServiceProvider();
     }
 
     // See https://nzcp.covid19.health.nz/#examples
