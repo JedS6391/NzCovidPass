@@ -34,7 +34,7 @@ public class PassVerifierTests
         Assert.NotNull(result.Pass);
         Assert.Equal("Jack", result.Pass.GivenName);
         Assert.Equal("Sparrow", result.Pass.FamilyName);
-        Assert.Equal("1960-04-16", result.Pass.DateOfBirth);
+        Assert.Equal(new DateTime(year: 1960, month: 4, day: 16), result.Pass.DateOfBirth);
         Assert.Empty(result.FailureReasons);
     }
 

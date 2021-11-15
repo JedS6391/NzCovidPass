@@ -17,7 +17,7 @@ namespace NzCovidPass.Core.Models
         /// <param name="familyName">The family name of the subject.</param>
         /// /// <param name="dateOfBirth">The date of birth of the subject.</param>
         [JsonConstructor]
-        public PublicCovidPass(string givenName, string familyName, string dateOfBirth)
+        public PublicCovidPass(string givenName, string familyName, DateTimeOffset dateOfBirth)
         {
             GivenName = givenName;
             FamilyName = familyName;
@@ -43,6 +43,6 @@ namespace NzCovidPass.Core.Models
         /// </summary>
         [JsonPropertyName("dob")]
         [JsonInclude]
-        public string DateOfBirth { get; private set; }
+        public DateTimeOffset DateOfBirth { get; private set; }
     }
 }
