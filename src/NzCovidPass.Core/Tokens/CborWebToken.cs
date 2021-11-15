@@ -105,7 +105,7 @@ namespace NzCovidPass.Core.Tokens
         /// </para>
         /// <see href="https://nzcp.covid19.health.nz/#cwt-claims" />
         /// </remarks>
-        public PublicCovidPass Credentials => _payload.Credentials;
+        public VerifiableCredential<PublicCovidPass> Credential => _payload.Credential;
 
         /// <summary>
         /// Gets the raw bytes of the CWT header.
@@ -234,7 +234,8 @@ namespace NzCovidPass.Core.Tokens
             /// <summary>
             /// Gets the value of <c>vc</c> claim.
             /// </summary>
-            public PublicCovidPass? Credentials => JsonSerializer.Deserialize<PublicCovidPass>(ReadClaimValueAsString(_cborObject, Constants.Payload.Vc));
+            public VerifiableCredential<PublicCovidPass>? Credential =>
+                JsonSerializer.Deserialize<VerifiableCredential<PublicCovidPass>>(ReadClaimValueAsString(_cborObject, Constants.Payload.Vc));
 
             /// <summary>
             /// Gets the raw payload bytes.

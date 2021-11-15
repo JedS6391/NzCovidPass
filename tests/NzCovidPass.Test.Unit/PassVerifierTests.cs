@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Dahomey.Cbor.ObjectModel;
@@ -171,7 +172,7 @@ public class PassVerifierTests
         Assert.False(result.HasSucceeded);
         Assert.True(result.HasFailed);
         Assert.Throws<InvalidOperationException>(() => result.Token);
-        Assert.Throws<InvalidOperationException>(() => result.Credentials);
+        Assert.Throws<InvalidOperationException>(() => result.Pass);
         Assert.NotEmpty(result.FailureReasons);
     }
 
@@ -181,14 +182,34 @@ public class PassVerifierTests
         Assert.True(result.HasSucceeded);
         Assert.False(result.HasFailed);
         Assert.NotNull(result.Token);
+        Assert.NotNull(result.Pass);
         Assert.Empty(result.FailureReasons);
     }
 
     private static CborWebToken CreateToken()
     {
+        var credentialSubject = new CborObject(new Dictionary<CborValue, CborValue>()
+        {
+            { "givenName", "John Andrew" },
+            { "familyName", "Doe" },
+            { "dob", "1979-04-14" },
+        });
+        var verifiableCredential = new CborObject(new Dictionary<CborValue, CborValue>()
+        {
+            { "version", "1.0.0" },
+            { "context", new CborArray("https://www.w3.org/2018/credentials/v1", "https://nzcp.covid19.health.nz/contexts/v1") },
+            { "type", new CborArray("VerifiableCredential", "PublicCovidPass") },
+            { "credentialSubject", credentialSubject }
+        });
+
         return new CborWebToken(
             new CborWebToken.Header(new CborObject(), ReadOnlyMemory<byte>.Empty),
-            new CborWebToken.Payload(new CborObject(), ReadOnlyMemory<byte>.Empty),
+            new CborWebToken.Payload(
+                new CborObject(new Dictionary<CborValue, CborValue>()
+                {
+                    { "vc", verifiableCredential }
+                }),
+                ReadOnlyMemory<byte>.Empty),
             new CborWebToken.Signature(ReadOnlyMemory<byte>.Empty));
     }
 }

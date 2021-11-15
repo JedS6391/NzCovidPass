@@ -37,7 +37,7 @@ namespace NzCovidPass.Core
         /// Attempting to access when <see cref="ValidationContext.HasSucceeded" /> is <see langword="false" /> will throw an <see cref="InvalidOperationException" />.
         /// </para>
         /// </remarks>
-        public PublicCovidPass Credentials => Token.Credentials;
+        public PublicCovidPass Pass => Token.Credential.CredentialSubject;
 
         /// <summary>
         /// Indicates that validation has succeeded for this context, with the provided <paramref name="token" />.
