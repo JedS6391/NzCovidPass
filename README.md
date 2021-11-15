@@ -24,14 +24,13 @@ var result = await verifier.VerifyAsync("...");
 
 if (result.HasSucceeded)
 {
-    // Pass is valid.
-    var details = result.Credentials.Details;
-
-    Console.WriteLine($"{details.FamilyName}, {details.GivenName} - {details.DateOfBirth}");
+    // Pass successfully verified
+    Console.WriteLine($"NZ COVID Pass subject details: {result.Pass.FamilyName}, {result.Pass.GivenName} - {result.Pass.DateOfBirth}");
 }
 else
-{
-    // Pass is not valid.
+{    
+    // Invalid pass
+    Console.WriteLine($"Verification failed: {string.Join(", ", result.FailureReasons.Select(fr => fr.Code))}");
 }
 ```
 

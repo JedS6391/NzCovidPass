@@ -36,9 +36,7 @@ var result = await verifier.VerifyAsync(CovidPassValid);
 
 if (result.HasSucceeded)
 {
-    var details = result.Credentials.Details;
-
-    Console.WriteLine($"NZ COVID Pass subject details: {details.FamilyName}, {details.GivenName} - {details.DateOfBirth}");
+    Console.WriteLine($"NZ COVID Pass subject details: {result.Pass.FamilyName}, {result.Pass.GivenName} - {result.Pass.DateOfBirth}");
 }
 else
 {
