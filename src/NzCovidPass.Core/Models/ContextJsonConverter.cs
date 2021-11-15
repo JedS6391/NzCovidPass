@@ -19,7 +19,9 @@ namespace NzCovidPass.Core.Models
                 _ => throw new JsonException("Unexpected JSON data for context."),
             };
 
-        public override void Write(Utf8JsonWriter writer, IReadOnlyList<string> value, JsonSerializerOptions options) =>
-            throw new NotImplementedException();
+        public override void Write(Utf8JsonWriter writer, IReadOnlyList<string> value, JsonSerializerOptions options)
+        {
+            JsonSerializer.Serialize(writer, value, options);
+        }
     }
 }
