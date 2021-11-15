@@ -68,51 +68,59 @@ namespace NzCovidPass.Core
             // Check the payload adheres to expected format.
             var passComponents = passPayload.Split('/', StringSplitOptions.None);
 
-            if (passComponents.Length != 3)
-            {
-                _logger.LogError("Expected 3 components separated by '/' in pass payload");
-
-                context.Fail(PassVerifierContext.InvalidPassComponents);
-
-                return context;
-            }
-
             ValidatePassComponents(context, passComponents);
 
-            // Read the token to validate its contents and signature
-            var payload = passComponents[2];
-
-            if (!_tokenReader.TryReadToken(payload, out var token) || token is null)
+            if (context.HasFailed)
             {
-                _logger.LogError("Token read failed [Payload = '{Payload}']", payload);
+                return context;
+            }
 
-                context.Fail(PassVerifierContext.TokenReadFailed);
+            // Decode the payload and read the CWT contained
+            var readerContext = new CborWebTokenReaderContext(passComponents[2]);
+
+            _tokenReader.ReadToken(readerContext);
+
+            if (readerContext.HasFailed)
+            {
+                _logger.LogError("Token read failed [Failures = {Failures}]", string.Join(", ", readerContext.FailureReasons.Select(fr => fr.Code)));
+
+                ApplyFailureReasons(context, readerContext, PassVerifierContext.TokenReadFailed);
 
                 return context;
             }
 
-            var validationContext = new CborWebTokenValidatorContext(token);
+            // Validate token claims and signature
+            var validatorContext = new CborWebTokenValidatorContext(readerContext.Token);
 
             await _tokenValidator
-                .ValidateTokenAsync(validationContext)
+                .ValidateTokenAsync(validatorContext)
                 .ConfigureAwait(false);
 
-            if (validationContext.HasFailed)
+            if (validatorContext.HasFailed)
             {
-                _logger.LogDebug("Token validation failed [Failures = {Failures}]", string.Join(", ", validationContext.FailureReasons.Select(fr => fr.Code)));
+                _logger.LogDebug("Token validation failed [Failures = {Failures}]", string.Join(", ", validatorContext.FailureReasons.Select(fr => fr.Code)));
 
-                context.Fail(PassVerifierContext.TokenValidationFailed);
+                ApplyFailureReasons(context, readerContext, PassVerifierContext.TokenValidationFailed);
 
                 return context;
             }
 
-            context.Succeed(token);
+            context.Succeed(readerContext.Token);
 
             return context;
         }
 
         private void ValidatePassComponents(PassVerifierContext context, string[] passComponents)
         {
+            if (passComponents.Length != 3)
+            {
+                _logger.LogError("Pass payload must be in the form '<prefix>:/<version>/<base32-encoded-CWT>'.");
+
+                context.Fail(PassVerifierContext.InvalidPassComponents);
+
+                return;
+            }
+
             var prefix = passComponents[0];
             var version = passComponents[1];
             var payload = passComponents[2];
@@ -121,22 +129,31 @@ namespace NzCovidPass.Core
             {
                 _logger.LogError("Prefix validation failed [Expected = '{Expected}', Actual = '{Actual}']", _verifierOptions.Prefix, prefix);
 
-                context.Fail(PassVerifierContext.PrefixValidationFailed);
+                context.Fail(PassVerifierContext.PrefixValidationFailed(_verifierOptions.Prefix));
             }
 
             if (!int.TryParse(version, out var versionNumber) || versionNumber != _verifierOptions.Version)
             {
                 _logger.LogError("Version validation failed [Expected = '{Expected}', Actual = '{Actual}']", _verifierOptions.Version, version);
 
-                context.Fail(PassVerifierContext.VersionValidationFailed);
+                context.Fail(PassVerifierContext.VersionValidationFailed(_verifierOptions.Version));
             }
 
-            if (string.IsNullOrEmpty(payload))
+            if (string.IsNullOrWhiteSpace(payload))
             {
-                _logger.LogError("Invalid pass payload.");
+                _logger.LogError("Pass payload must not be empty or whitespace.");
 
-                context.Fail(PassVerifierContext.InvalidPassPayload);
+                context.Fail(PassVerifierContext.EmptyPassPayload);
             }
+        }
+
+        private static void ApplyFailureReasons(PassVerifierContext verifierContext, ValidationContext subContext, ValidationContext.FailureReason failureReason)
+        {
+            var failureReasons = subContext.FailureReasons.ToList();
+
+            failureReasons.Add(failureReason);
+
+            verifierContext.Fail(failureReasons);
         }
     }
 }

@@ -44,11 +44,12 @@ namespace NzCovidPass.Core.Shared
         }
 
         /// <summary>
-        /// Indicates that validation has failed for this context, with the provided <param ref="failureReason" />.
+        /// Indicates that validation has failed for this context, with the provided <paramref name="failureReason" />.
         /// </summary>
         /// <remarks>
         /// Calling this method will ensure that <see cref="HasSucceeded" /> will never return <see langword="true" />.
         /// </remarks>
+        /// <param name="failureReason">A <see cref="FailureReason" /> instance describing the failure.</param>
         public virtual void Fail(FailureReason failureReason)
         {
             ArgumentNullException.ThrowIfNull(failureReason);
@@ -61,6 +62,27 @@ namespace NzCovidPass.Core.Shared
             }
 
             _failureReasons.Add(failureReason);
+        }
+
+        /// <summary>
+        /// Indicates that validation has failed for this context, with the provided <paramref name="failureReasons" />.
+        /// </summary>
+        /// <remarks>
+        /// Calling this method will ensure that <see cref="HasSucceeded" /> will never return <see langword="true" />.
+        /// </remarks>
+        /// <param name="failureReasons">A collection of <see cref="FailureReason" /> instances describing the failures.</param>
+        public virtual void Fail(IEnumerable<FailureReason> failureReasons)
+        {
+            ArgumentNullException.ThrowIfNull(failureReasons);
+
+            Fail();
+
+            if (_failureReasons is null)
+            {
+                _failureReasons = new List<FailureReason>();
+            }
+
+            _failureReasons.AddRange(failureReasons);
         }
 
         /// <summary>
