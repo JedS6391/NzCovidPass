@@ -39,6 +39,7 @@ public class PassVerifierTests
     [InlineData("NZCP:/1/.../..")]
     [InlineData("test/")]
     [InlineData(@"NZCP://1/...")]
+    [InlineData("...")]
     public async Task VerifyAsync_InvalidNumberOfComponentsInPayload_ReturnsFailResult(string passPayload)
     {
         var result = await _passVerifier.VerifyAsync(passPayload);
@@ -57,7 +58,7 @@ public class PassVerifierTests
 
         AssertFailedResult(result);
 
-        Assert.Contains(PassVerifierContext.PrefixValidationFailed, result.FailureReasons);
+        Assert.Contains(PassVerifierContext.PrefixValidationFailed(requiredPrefix: "NZCP:"), result.FailureReasons);
     }
 
     [Theory]
@@ -70,19 +71,19 @@ public class PassVerifierTests
 
         AssertFailedResult(result);
 
-        Assert.Contains(PassVerifierContext.VersionValidationFailed, result.FailureReasons);
+        Assert.Contains(PassVerifierContext.VersionValidationFailed(requiredVersion: 1), result.FailureReasons);
     }
 
-    [Fact]
-    public async Task VerifyAsync_EmptyPayload_ReturnsFailResult()
+    [Theory]
+    [InlineData("NZCP:/1/")]
+    [InlineData("NZCP:/1/  ")]
+    public async Task VerifyAsync_EmptyPayload_ReturnsFailResult(string passPayload)
     {
-        const string PassPayload = "NZCP:/1/";
-
-        var result = await _passVerifier.VerifyAsync(PassPayload);
+        var result = await _passVerifier.VerifyAsync(passPayload);
 
         AssertFailedResult(result);
 
-        Assert.Contains(PassVerifierContext.InvalidPassPayload, result.FailureReasons);
+        Assert.Contains(PassVerifierContext.EmptyPassPayload, result.FailureReasons);
     }
 
     [Fact]
@@ -91,29 +92,12 @@ public class PassVerifierTests
         const string PassPayload = "NZCP:/1/...";
 
         _tokenReader
-            .TryReadToken(Arg.Any<string>(), out Arg.Any<CborWebToken>())
-            .Returns(false);
-
-        var result = await _passVerifier.VerifyAsync(PassPayload);
-
-        AssertFailedResult(result);
-
-        Assert.Contains(PassVerifierContext.TokenReadFailed, result.FailureReasons);
-    }
-
-    [Fact]
-    public async Task VerifyAsync_TokenReaderReturnsNoToken_ReturnsFailResult()
-    {
-        const string PassPayload = "NZCP:/1/...";
-
-        _tokenReader
-            .TryReadToken(Arg.Any<string>(), out Arg.Any<CborWebToken>())
-            .Returns(ci =>
+            .When(r => r.ReadToken(Arg.Any<CborWebTokenReaderContext>()))
+            .Do(ci =>
             {
-                // Set token to null but return successful token read
-                ci[1] = null;
+                var context = ci[0] as CborWebTokenReaderContext;
 
-                return true;
+                context.Fail();
             });
 
         var result = await _passVerifier.VerifyAsync(PassPayload);
@@ -129,13 +113,12 @@ public class PassVerifierTests
         const string PassPayload = "NZCP:/1/...";
 
         _tokenReader
-            .TryReadToken(Arg.Any<string>(), out Arg.Any<CborWebToken>())
-            .Returns(ci =>
+            .When(r => r.ReadToken(Arg.Any<CborWebTokenReaderContext>()))
+            .Do(ci =>
             {
-                // Set token
-                ci[1] = CreateToken();
+                var context = ci[0] as CborWebTokenReaderContext;
 
-                return true;
+                context.Succeed(CreateToken());
             });
 
         _tokenValidator
@@ -160,13 +143,12 @@ public class PassVerifierTests
         const string PassPayload = "NZCP:/1/...";
 
         _tokenReader
-            .TryReadToken(Arg.Any<string>(), out Arg.Any<CborWebToken>())
-            .Returns(ci =>
+            .When(r => r.ReadToken(Arg.Any<CborWebTokenReaderContext>()))
+            .Do(ci =>
             {
-                // Set token
-                ci[1] = CreateToken();
+                var context = ci[0] as CborWebTokenReaderContext;
 
-                return true;
+                context.Succeed(CreateToken());
             });
 
         _tokenValidator

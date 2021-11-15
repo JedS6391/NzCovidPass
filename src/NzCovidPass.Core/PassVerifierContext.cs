@@ -53,22 +53,24 @@ namespace NzCovidPass.Core
         /// <summary>
         /// Invalid pass components failure reason.
         /// </summary>
-        public static FailureReason InvalidPassComponents => new(nameof(InvalidPassComponents), "Invalid pass components.");
+        public static FailureReason InvalidPassComponents => new(nameof(InvalidPassComponents), "Pass payload must be in the form '<prefix>:/<version>/<base32-encoded-CWT>'.");
 
         /// <summary>
         /// Invalid pass payload failure reason.
         /// </summary>
-        public static FailureReason InvalidPassPayload => new(nameof(InvalidPassPayload), "Invalid pass payload.");
+        public static FailureReason EmptyPassPayload => new(nameof(EmptyPassPayload), "Pass payload must not be empty or whitespace.");
 
         /// <summary>
         /// Failed prefix validation failure reason.
         /// </summary>
-        public static FailureReason PrefixValidationFailed => new(nameof(PrefixValidationFailed), "Prefix validation failed.");
+        public static FailureReason PrefixValidationFailed(string requiredPrefix) =>
+            new(nameof(PrefixValidationFailed), $"Prefix validation failed [Required prefix = {requiredPrefix}].");
 
         /// <summary>
         /// Failed version validation failure reason.
         /// </summary>
-        public static FailureReason VersionValidationFailed => new(nameof(VersionValidationFailed), "Version validation failed.");
+        public static FailureReason VersionValidationFailed(int requiredVersion) =>
+            new(nameof(VersionValidationFailed), $"Version validation failed [Required version = {requiredVersion}].");
 
         /// <summary>
         /// Failed token read failure reason.

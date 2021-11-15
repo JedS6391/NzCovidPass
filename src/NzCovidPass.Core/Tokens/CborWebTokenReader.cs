@@ -20,20 +20,20 @@ namespace NzCovidPass.Core.Tokens
         }
 
         /// <inheritdoc />
-        public bool TryReadToken(string base32Payload, out CborWebToken? token)
+        public void ReadToken(CborWebTokenReaderContext context)
         {
-            ArgumentNullException.ThrowIfNull(base32Payload);
+            ArgumentNullException.ThrowIfNull(context);
 
-            base32Payload = AddBase32Padding(base32Payload);
-
-            _logger.LogDebug("Decoding base-32 payload '{Payload}'", base32Payload);
-
-            var decodedPayloadBytes = Base32.ToBytes(base32Payload);
-
-            _logger.LogDebug("Decoded base-32 payload bytes (hex) '{Payload}'", Convert.ToHexString(decodedPayloadBytes));
+            var base32Payload = AddBase32Padding(context.Payload);
 
             try
             {
+                _logger.LogDebug("Decoding base-32 payload '{Payload}'", base32Payload);
+
+                var decodedPayloadBytes = Base32.ToBytes(base32Payload);
+
+                _logger.LogDebug("Decoded base-32 payload bytes (hex) '{Payload}'", Convert.ToHexString(decodedPayloadBytes));
+
                 var decodedCborStructure = Cbor.Deserialize<CborArray>(decodedPayloadBytes);
 
                 _logger.LogDebug("Decoded CBOR structure: {Structure}", decodedCborStructure);
@@ -45,20 +45,24 @@ namespace NzCovidPass.Core.Tokens
                 var header = Cbor.Deserialize<CborObject>(rawHeaderBytes.Span);
                 var payload = Cbor.Deserialize<CborObject>(rawPayloadBytes.Span);
 
-                token = new CborWebToken(
+                var token = new CborWebToken(
                     new CborWebToken.Header(header, rawHeaderBytes),
                     new CborWebToken.Payload(payload, rawPayloadBytes),
                     new CborWebToken.Signature(rawSignatureBytes));
 
-                return true;
+                context.Succeed(token);
+            }
+            catch (FormatException formatException)
+            {
+                _logger.LogError(formatException, "Failed to decode base-32 payload.");
+
+                context.Fail(CborWebTokenReaderContext.InvalidBase32Payload);
             }
             catch (CborException cborException)
             {
                 _logger.LogError(cborException, "Failed to decode CBOR structure");
 
-                token = null;
-
-                return false;
+                context.Fail(CborWebTokenReaderContext.FailedToDecodeCborStructure);
             }
         }
 

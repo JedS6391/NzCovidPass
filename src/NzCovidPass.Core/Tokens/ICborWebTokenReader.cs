@@ -6,11 +6,17 @@ namespace NzCovidPass.Core.Tokens
     public interface ICborWebTokenReader
     {
         /// <summary>
-        /// Attempts to read a <see cref="CborWebToken" /> instance from <paramref name="base32Payload" />.
+        /// Attempts to read a <see cref="CborWebToken" /> instance from the payload provided in <paramref name="context" />.
         /// </summary>
-        /// <param name="base32Payload">A CBOR web token encoded as a base-32 string.</param>
-        /// <param name="token">The token read from the payload, if reading succeeds; otherwise <see langword="null" />.</param>
-        /// <returns><see langword="true" /> if a token was successfully read; <see langword="false" /> otherwise.</returns>
-        bool TryReadToken(string base32Payload, out CborWebToken? token);
+        /// <remarks>
+        /// <para>
+        /// The base-32 payload to read from is provided in <see cref="CborWebTokenReaderContext.Payload" />.
+        /// </para>
+        /// <para>
+        /// The provided <see cref="CborWebTokenReaderContext" /> will be updated to indicate whether reading succeeded or not.
+        /// </para>
+        /// </remarks>
+        /// <param name="context">A context to manage details of the read process.</param>
+        void ReadToken(CborWebTokenReaderContext context);
     }
 }
