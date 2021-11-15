@@ -9,7 +9,7 @@ namespace NzCovidPass.Core
     /// </summary>
     public class PassVerifierContext : ValidationContext
     {
-        private CborWebToken? _token;
+        private CwtSecurityToken? _token;
 
         /// <summary>
         /// Gets the token that was verified.
@@ -22,7 +22,7 @@ namespace NzCovidPass.Core
         /// Attempting to access when <see cref="ValidationContext.HasSucceeded" /> is <see langword="false" /> will throw an <see cref="InvalidOperationException" />.
         /// </para>
         /// </remarks>
-        public CborWebToken Token => (HasSucceeded && _token is not null) ?
+        public CwtSecurityToken Token => (HasSucceeded && _token is not null) ?
             _token :
             throw new InvalidOperationException("Token has not been set.");
 
@@ -43,7 +43,7 @@ namespace NzCovidPass.Core
         /// Indicates that validation has succeeded for this context, with the provided <paramref name="token" />.
         /// </summary>
         /// <param name="token">The verified token.</param>
-        public void Succeed(CborWebToken token)
+        public void Succeed(CwtSecurityToken token)
         {
             base.Succeed();
 

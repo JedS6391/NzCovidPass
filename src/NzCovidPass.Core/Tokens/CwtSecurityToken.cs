@@ -17,19 +17,19 @@ namespace NzCovidPass.Core.Tokens
     /// </para>
     /// <see href="https://datatracker.ietf.org/doc/html/rfc8392" />
     /// </remarks>
-    public class CborWebToken : SecurityToken
+    public class CwtSecurityToken : SecurityToken
     {
         private readonly Header _header;
         private readonly Payload _payload;
         private readonly Signature _signature;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="CborWebToken" /> class.
+        /// Initializes a new instance of the <see cref="CwtSecurityToken" /> class.
         /// </summary>
         /// <param name="header">The CWT header.</param>
         /// <param name="payload">The CWT payload.</param>
         /// <param name="signature">The CWT signature.</param>
-        public CborWebToken(Header header, Payload payload, Signature signature)
+        public CwtSecurityToken(Header header, Payload payload, Signature signature)
         {
             _header = Requires.NotNull(header);
             _payload = Requires.NotNull(payload);

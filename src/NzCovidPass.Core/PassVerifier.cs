@@ -22,21 +22,21 @@ namespace NzCovidPass.Core
     {
         private readonly ILogger<PassVerifier> _logger;
         private readonly PassVerifierOptions _verifierOptions;
-        private readonly ICborWebTokenReader _tokenReader;
-        private readonly ICborWebTokenValidator _tokenValidator;
+        private readonly ICwtSecurityTokenReader _tokenReader;
+        private readonly ICwtSecurityTokenValidator _tokenValidator;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="PassVerifier"/> class.
         /// </summary>
         /// <param name="logger">An <see cref="ILogger{TCategoryName}" /> instance used for writing log messages.</param>
         /// <param name="verifierOptionsAccessor">An accessor for <see cref="PassVerifierOptions" /> instances.</param>
-        /// <param name="tokenReader">An <see cref="ICborWebTokenReader" /> instance used to read CBOR Web Token (CWT) data.</param>
-        /// <param name="tokenValidator">An <see cref="ICborWebTokenValidator" /> instance used to validate CBOR Web Token (CWT) data.</param>
+        /// <param name="tokenReader">An <see cref="ICwtSecurityTokenReader" /> instance used to read CBOR Web Token (CWT) data.</param>
+        /// <param name="tokenValidator">An <see cref="ICwtSecurityTokenValidator" /> instance used to validate CBOR Web Token (CWT) data.</param>
         public PassVerifier(
             ILogger<PassVerifier> logger,
             IOptions<PassVerifierOptions> verifierOptionsAccessor,
-            ICborWebTokenReader tokenReader,
-            ICborWebTokenValidator tokenValidator)
+            ICwtSecurityTokenReader tokenReader,
+            ICwtSecurityTokenValidator tokenValidator)
         {
             _logger = Requires.NotNull(logger);
             _verifierOptions = Requires.NotNull(verifierOptionsAccessor).Value;
@@ -76,7 +76,7 @@ namespace NzCovidPass.Core
             }
 
             // Decode the payload and read the CWT contained
-            var readerContext = new CborWebTokenReaderContext(passComponents[2]);
+            var readerContext = new CwtSecurityTokenReaderContext(passComponents[2]);
 
             _tokenReader.ReadToken(readerContext);
 
@@ -90,7 +90,7 @@ namespace NzCovidPass.Core
             }
 
             // Validate token claims and signature
-            var validatorContext = new CborWebTokenValidatorContext(readerContext.Token);
+            var validatorContext = new CwtSecurityTokenValidatorContext(readerContext.Token);
 
             await _tokenValidator
                 .ValidateTokenAsync(validatorContext)

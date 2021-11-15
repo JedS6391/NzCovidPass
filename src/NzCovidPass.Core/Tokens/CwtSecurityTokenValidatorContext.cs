@@ -5,15 +5,15 @@ namespace NzCovidPass.Core.Tokens
     /// <summary>
     /// Encapsulates details of the token validation process.
     /// </summary>
-    public class CborWebTokenValidatorContext : ValidationContext
+    public class CwtSecurityTokenValidatorContext : ValidationContext
     {
-        private readonly CborWebToken _token;
+        private readonly CwtSecurityToken _token;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="CborWebTokenValidatorContext" /> class.
+        /// Initializes a new instance of the <see cref="CwtSecurityTokenValidatorContext" /> class.
         /// </summary>
         /// <param name="token">The token to validate.</param>
-        public CborWebTokenValidatorContext(CborWebToken token)
+        public CwtSecurityTokenValidatorContext(CwtSecurityToken token)
         {
             _token = Requires.NotNull(token);
         }
@@ -21,7 +21,7 @@ namespace NzCovidPass.Core.Tokens
         /// <summary>
         /// Gets the token to validate.
         /// </summary>
-        public CborWebToken Token => _token;
+        public CwtSecurityToken Token => _token;
 
         /// <summary>
         /// Key identifier validation failure reason.
