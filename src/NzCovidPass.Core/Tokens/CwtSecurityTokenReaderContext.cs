@@ -53,7 +53,7 @@ namespace NzCovidPass.Core.Tokens
         /// <summary>
         /// Invalid base-32 payload failure reason.
         /// </summary>
-        public static FailureReason InvalidBase32Payload => new(nameof(InvalidBase32Payload), "Invalid base-32 payload.");
+        public static FailureReason InvalidBase32Payload => new(nameof(InvalidBase32Payload), "Payload must be a base-32 encoded string.");
 
         /// <summary>
         /// Failed to decode CBOR structure failure reason.

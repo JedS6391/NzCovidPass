@@ -40,13 +40,13 @@ namespace NzCovidPass.Core.Tokens
         public override string Id => Jti;
 
         /// <inheritdoc />
-        public override string Issuer => _payload.Issuer;
+        public override string? Issuer => _payload.Issuer;
 
         /// <inheritdoc />
-        public override SecurityKey SecurityKey => null;
+        public override SecurityKey? SecurityKey => null;
 
         /// <inheritdoc />
-        public override SecurityKey SigningKey { get; set; }
+        public override SecurityKey? SigningKey { get; set; }
 
         /// <inheritdoc />
         public override DateTime ValidFrom => NotBefore.Date;
@@ -57,12 +57,12 @@ namespace NzCovidPass.Core.Tokens
         /// <summary>
         /// Gets the identifier of the key used to sign the token from the CWT header.
         /// </summary>
-        public string KeyId => _header.KeyId;
+        public string? KeyId => _header.KeyId;
 
         /// <summary>
         /// Gets the algorithm used to sign the token from the CWT header.
         /// </summary>
-        public string Algorithm => _header.Algorithm;
+        public string? Algorithm => _header.Algorithm;
 
         /// <summary>
         /// Gets the value of the <c>cti</c> claim from the CWT payload, mapped to a JTI value.
@@ -105,7 +105,7 @@ namespace NzCovidPass.Core.Tokens
         /// </para>
         /// <see href="https://nzcp.covid19.health.nz/#cwt-claims" />
         /// </remarks>
-        public VerifiableCredential<PublicCovidPass> Credential => _payload.Credential;
+        public VerifiableCredential<PublicCovidPass>? Credential => _payload.Credential;
 
         /// <summary>
         /// Gets the raw bytes of the CWT header.
@@ -147,11 +147,18 @@ namespace NzCovidPass.Core.Tokens
             /// <summary>
             /// Gets the identifier of the key used to sign the token.
             /// </summary>
-            public string KeyId
+            public string? KeyId
             {
                 get
                 {
-                    var keyIdBytes = _cborObject[Constants.Header.KeyId].GetValueBytes();
+                    var keyId = ReadRawClaimValue(_cborObject, ClaimIds.Header.KeyId);
+
+                    if (keyId == null)
+                    {
+                        return null;
+                    }
+
+                    var keyIdBytes = keyId.GetValueBytes();
 
                     return Encoding.UTF8.GetString(keyIdBytes.Span);
                 }
@@ -160,13 +167,18 @@ namespace NzCovidPass.Core.Tokens
             /// <summary>
             /// Gets the algorithm used to sign the token.
             /// </summary>
-            public string Algorithm
+            public string? Algorithm
             {
                 get
                 {
-                    var algorithm = ReadClaimValue<int>(_cborObject, Constants.Header.Algorithm);
+                    var algorithmId = ReadClaimValue<int>(_cborObject, ClaimIds.Header.Algorithm);
 
-                    return Constants.Header.CoseAlgorithmMap[algorithm];
+                    if (ClaimIds.Header.AlgorithmMap.TryGetValue(algorithmId, out var algorithmName))
+                    {
+                        return algorithmName;
+                    }
+
+                    return null;
                 }
             }
 
@@ -210,7 +222,14 @@ namespace NzCovidPass.Core.Tokens
             {
                 get
                 {
-                    var ctiBytes = _cborObject[Constants.Payload.Cti].GetValueBytes();
+                    var cti = ReadRawClaimValue(_cborObject, ClaimIds.Payload.Cti);
+
+                    if (cti == null)
+                    {
+                        return Guid.Empty;
+                    }
+
+                    var ctiBytes = cti.GetValueBytes();
 
                     return new Guid(ctiBytes.Span);
                 }
@@ -219,23 +238,22 @@ namespace NzCovidPass.Core.Tokens
             /// <summary>
             /// Gets the value of <c>iss</c> claim.
             /// </summary>
-            public string Issuer => ReadClaimValue<string>(_cborObject, Constants.Payload.Iss);
+            public string? Issuer => ReadClaimValue<string>(_cborObject, ClaimIds.Payload.Iss);
 
             /// <summary>
             /// Gets the value of <c>exp</c> claim.
             /// </summary>
-            public DateTimeOffset Expiry => DateTimeOffset.FromUnixTimeSeconds(ReadClaimValue<int>(_cborObject, Constants.Payload.Exp));
+            public DateTimeOffset Expiry => DateTimeOffset.FromUnixTimeSeconds(ReadClaimValue<int>(_cborObject, ClaimIds.Payload.Exp));
 
             /// <summary>
             /// Gets the value of <c>nbf</c> claim.
             /// </summary>
-            public DateTimeOffset NotBefore => DateTimeOffset.FromUnixTimeSeconds(ReadClaimValue<int>(_cborObject, Constants.Payload.Nbf));
+            public DateTimeOffset NotBefore => DateTimeOffset.FromUnixTimeSeconds(ReadClaimValue<int>(_cborObject, ClaimIds.Payload.Nbf));
 
             /// <summary>
             /// Gets the value of <c>vc</c> claim.
             /// </summary>
-            public VerifiableCredential<PublicCovidPass>? Credential =>
-                JsonSerializer.Deserialize<VerifiableCredential<PublicCovidPass>>(ReadClaimValueAsString(_cborObject, Constants.Payload.Vc));
+            public VerifiableCredential<PublicCovidPass>? Credential => ReadClaimValue<VerifiableCredential<PublicCovidPass>>(_cborObject, ClaimIds.Payload.Vc);
 
             /// <summary>
             /// Gets the raw payload bytes.
@@ -268,32 +286,45 @@ namespace NzCovidPass.Core.Tokens
             public byte[] Bytes => _rawSignature.ToArray();
         }
 
-        private static T ReadClaimValue<T>(CborObject cborObject, CborValue claimId)
+        private static T? ReadClaimValue<T>(CborObject cborObject, CborValue claimId)
         {
-            var rawClaimValue = cborObject[claimId];
+            var rawClaimValue = ReadRawClaimValue(cborObject, claimId);
 
-            var decodedClaimValue = rawClaimValue.Value<T>();
+            if (rawClaimValue == null)
+            {
+                return default;
+            }
 
-            return decodedClaimValue;
+            if (rawClaimValue is CborObject claimObject)
+            {
+                var claimObjectJson = claimObject.ToString();
+
+                return JsonSerializer.Deserialize<T>(claimObjectJson);
+            }
+
+            return rawClaimValue.Value<T>();
         }
 
-        private static string ReadClaimValueAsString(CborObject cborObject, CborValue claimId)
+        private static CborValue? ReadRawClaimValue(CborObject cborObject, CborValue claimId)
         {
-            var rawClaimValue = cborObject[claimId];
+            if (cborObject.TryGetValue(claimId, out var rawClaimValue))
+            {
+                return rawClaimValue;
+            }
 
-            return rawClaimValue.ToString();
+            return null;
         }
 
-        private static class Constants
+        private static class ClaimIds
         {
             public static class Header
             {
                 public const int Algorithm = 1;
                 public const int KeyId = 4;
 
-                public static readonly Dictionary<int, string> CoseAlgorithmMap = new Dictionary<int, string>()
+                public static readonly Dictionary<int, string> AlgorithmMap = new Dictionary<int, string>()
                 {
-                    { -7, "ES256" }
+                    { -7, SecurityAlgorithms.EcdsaSha256 }
                 };
             }
 

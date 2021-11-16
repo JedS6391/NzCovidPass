@@ -91,7 +91,7 @@ namespace NzCovidPass.Core.Verification
             {
                 _logger.LogError(exception, "Failed to retrieved decentralized identifier document");
 
-                throw new VerificationKeyNotFoundException($"Unable to retrieve key.");
+                throw new VerificationKeyNotFoundException($"Unable to retrieve key for issuer '{issuer}'.");
             }
         }
 

@@ -37,7 +37,7 @@ namespace NzCovidPass.Core
         /// Attempting to access when <see cref="ValidationContext.HasSucceeded" /> is <see langword="false" /> will throw an <see cref="InvalidOperationException" />.
         /// </para>
         /// </remarks>
-        public PublicCovidPass Pass => Token.Credential.CredentialSubject;
+        public PublicCovidPass? Pass => Token?.Credential?.CredentialSubject;
 
         /// <summary>
         /// Indicates that validation has succeeded for this context, with the provided <paramref name="token" />.
@@ -63,19 +63,19 @@ namespace NzCovidPass.Core
         /// <summary>
         /// Failed prefix validation failure reason.
         /// </summary>
-        public static FailureReason PrefixValidationFailed(string requiredPrefix) =>
-            new(nameof(PrefixValidationFailed), $"Prefix validation failed [Required prefix = {requiredPrefix}].");
+        public static FailureReason PrefixValidationFailed(string validPrefix) =>
+            new(nameof(PrefixValidationFailed), $"Pass prefix does not have a valid value [Valid prefix = {validPrefix}].");
 
         /// <summary>
         /// Failed version validation failure reason.
         /// </summary>
-        public static FailureReason VersionValidationFailed(int requiredVersion) =>
-            new(nameof(VersionValidationFailed), $"Version validation failed [Required version = {requiredVersion}].");
+        public static FailureReason VersionValidationFailed(int validVersion) =>
+            new(nameof(VersionValidationFailed), $"Pass version does not have a valid value [Valid version = {validVersion}].");
 
         /// <summary>
         /// Failed token read failure reason.
         /// </summary>
-        public static FailureReason TokenReadFailed => new(nameof(TokenReadFailed), "Token read failed.");
+        public static FailureReason TokenReadFailed => new(nameof(TokenReadFailed), "Token read failed");
 
         /// <summary>
         /// Failed token validation failure reason.

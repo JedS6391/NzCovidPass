@@ -26,32 +26,53 @@ namespace NzCovidPass.Core.Tokens
         /// <summary>
         /// Key identifier validation failure reason.
         /// </summary>
-        public static FailureReason KeyIdValidationFailed => new(nameof(KeyIdValidationFailed), "Key ID validation failed.");
+        public static FailureReason KeyIdValidationFailed =>
+            new(nameof(KeyIdValidationFailed), "Key ID (`kid`) parameter could not be found in CWT header.");
 
         /// <summary>
         /// Token identifier validation failure reason.
         /// </summary>
-        public static FailureReason TokenIdValidationFailed => new(nameof(TokenIdValidationFailed), "Token ID validation failed.");
+        public static FailureReason TokenIdValidationFailed =>
+            new(nameof(TokenIdValidationFailed), "Token ID (mapped `cti`) parameter could not be found in CWT payload.");
 
         /// <summary>
         /// Algorithm validation failure reason.
         /// </summary>
-        public static FailureReason AlgorithmValidationFailed => new(nameof(AlgorithmValidationFailed), "Algorithm validation failed.");
+        public static FailureReason AlgorithmValidationFailed(IEnumerable<string> validAlgorithms) =>
+            new(nameof(AlgorithmValidationFailed),
+                $"Algorithm (`alg`) parameter could not be found in CWT header or has an unexpected value [Valid algorithms = {string.Join(", ", validAlgorithms)}].");
 
         /// <summary>
         /// Issuer validation failure reason.
         /// </summary>
-        public static FailureReason IssuerValidationFailed => new(nameof(IssuerValidationFailed), "Issuer validation failed.");
+        public static FailureReason IssuerValidationFailed(IEnumerable<string> validIssuers) =>
+            new(nameof(IssuerValidationFailed),
+                $"Issuer (`iss`) parameter could not be found in CWT payload or has an unexpected value [Valid issuers = {string.Join(", ", validIssuers)}].");
 
         /// <summary>
         /// Lifetime validation failure reason.
         /// </summary>
-        public static FailureReason LifetimeValidationFailed => new(nameof(LifetimeValidationFailed), "Lifetime validation failed.");
+        public static FailureReason LifetimeValidationFailed =>
+            new(nameof(LifetimeValidationFailed), "Lifetime validation failed due to an inconsistency between not before parameter (`nbf`) and expiry parameter (`exp`).");
+
+        /// <summary>
+        /// Not before validation failure reason.
+        /// </summary>
+        public static FailureReason NotBeforeValidationFailed =>
+            new(nameof(NotBeforeValidationFailed), "Not before (`nbf`) parameter could not be found in CWT payload or has an unexpected value.");
+
+        /// <summary>
+        /// Expiry validation failure reason.
+        /// </summary>
+        public static FailureReason ExpiryValidationFailed =>
+            new(nameof(ExpiryValidationFailed), "Expiry (`exp`) parameter could not be found in CWT payload or has an unexpected value.");
 
         /// <summary>
         /// Failed verification key retrieval failure reason.
         /// </summary>
-        public static FailureReason VerificationKeyRetrievalFailed => new(nameof(VerificationKeyRetrievalFailed), "Verification key retrieval failed.");
+        public static FailureReason VerificationKeyRetrievalFailed =>
+            new(nameof(VerificationKeyRetrievalFailed),
+                "Verification key retrieval failed. This could be caused by DID document resolution failing due to a network error/invalid URL or the retrieved document not containing the expected assertion/verification method.");
 
         /// <summary>
         /// Signature validation failure reason.

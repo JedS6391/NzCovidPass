@@ -38,10 +38,7 @@ namespace NzCovidPass.Core.Tokens
         {
             ArgumentNullException.ThrowIfNull(context);
 
-            var token = context.Token;
-
-            _logger.LogDebug("Validating token payload");
-
+            ValidateHeader(context);
             ValidatePayload(context);
 
             if (context.HasFailed)
@@ -51,9 +48,7 @@ namespace NzCovidPass.Core.Tokens
                 return;
             }
 
-            _logger.LogDebug("Validating token signature");
-
-            var verificationKey = await GetVerificationKeyAsync(token).ConfigureAwait(false);
+            var verificationKey = await GetVerificationKeyAsync(context.Token).ConfigureAwait(false);
 
             if (verificationKey is null)
             {
@@ -71,33 +66,44 @@ namespace NzCovidPass.Core.Tokens
                 return;
             }
 
-            token.SigningKey = verificationKey;
+            // Now that we've validated the signature we can link the key and token.
+            context.Token.SigningKey = verificationKey;
 
             context.Succeed();
 
             return;
         }
 
+        private void ValidateHeader(CwtSecurityTokenValidatorContext context)
+        {
+            _logger.LogDebug("Validating token header");
+
+            ValidateHeaderRequiredClaims(context);
+            ValidateAlgorithm(context);
+        }
+
         private void ValidatePayload(CwtSecurityTokenValidatorContext context)
         {
-            ValidateRequiredClaims(context);
-            ValidateAlgorithm(context);
+            _logger.LogDebug("Validating token payload");
+
+            ValidatePayloadRequiredClaims(context);
             ValidateIssuer(context);
             ValidateLifetime(context);
         }
 
-        private void ValidateRequiredClaims(CwtSecurityTokenValidatorContext context)
+        private void ValidateHeaderRequiredClaims(CwtSecurityTokenValidatorContext context)
         {
-            var token = context.Token;
-
-            if (string.IsNullOrEmpty(token.KeyId))
+            if (string.IsNullOrEmpty(context.Token.KeyId))
             {
                 _logger.LogError("Key ID validation failed");
 
                 context.Fail(CwtSecurityTokenValidatorContext.KeyIdValidationFailed);
             }
+        }
 
-            if (string.IsNullOrEmpty(token.Id))
+        private void ValidatePayloadRequiredClaims(CwtSecurityTokenValidatorContext context)
+        {
+            if (string.IsNullOrEmpty(context.Token.Id))
             {
                 _logger.LogError("Token ID validation failed");
 
@@ -113,7 +119,7 @@ namespace NzCovidPass.Core.Tokens
             {
                 _logger.LogError("Algorithm validation failed [Expected = '{{ {Expected} }}', Actual = '{Actual}']", string.Join(", ", _verifierOptions.ValidAlgorithms), token.Algorithm);
 
-                context.Fail(CwtSecurityTokenValidatorContext.AlgorithmValidationFailed);
+                context.Fail(CwtSecurityTokenValidatorContext.AlgorithmValidationFailed(_verifierOptions.ValidAlgorithms));
             }
         }
 
@@ -125,7 +131,7 @@ namespace NzCovidPass.Core.Tokens
             {
                 _logger.LogError("Issuer validation failed [Expected = '{{ {Expected} }}', Actual = '{Actual}']", string.Join(", ", _verifierOptions.ValidIssuers), token.Issuer);
 
-                context.Fail(CwtSecurityTokenValidatorContext.IssuerValidationFailed);
+                context.Fail(CwtSecurityTokenValidatorContext.IssuerValidationFailed(_verifierOptions.ValidIssuers));
             }
         }
 
@@ -146,24 +152,26 @@ namespace NzCovidPass.Core.Tokens
             {
                 _logger.LogError("Lifetime validation failed [Not Before ({NotBefore}) > UtcNow ({UtcNow})]", token.NotBefore, utcNow);
 
-                context.Fail(CwtSecurityTokenValidatorContext.LifetimeValidationFailed);
+                context.Fail(CwtSecurityTokenValidatorContext.NotBeforeValidationFailed);
             }
 
             if (token.Expiry < utcNow)
             {
                 _logger.LogError("Lifetime validation failed [Expiry ({Expiry}) > UtcNow ({UtcNow})]", token.Expiry, utcNow);
 
-                context.Fail(CwtSecurityTokenValidatorContext.LifetimeValidationFailed);
+                context.Fail(CwtSecurityTokenValidatorContext.ExpiryValidationFailed);
             }
         }
 
         private void ValidateSignature(CwtSecurityTokenValidatorContext context, SecurityKey key)
         {
+            _logger.LogDebug("Validating token signature");
+
             var token = context.Token;
             var algorithm = token.Algorithm;
             var signature = token.SignatureBytes;
 
-            var signedBytes = GetSignedBytes(token);
+            var signatureStructure = BuildSignatureStructure(token);
 
             var cryptoProviderFactory = key.CryptoProviderFactory;
 
@@ -178,8 +186,10 @@ namespace NzCovidPass.Core.Tokens
 
             try
             {
-                if (!signatureProvider.Verify(signedBytes, signature))
+                if (!signatureProvider.Verify(signatureStructure, signature))
                 {
+                    _logger.LogError("Signature validation failed [Signature computed using {Algorithm} and {Key} is not consistent with the provided signature]", algorithm, key.GetType().Name);
+
                     context.Fail(CwtSecurityTokenValidatorContext.SignatureValidationFailed);
                 }
             }
@@ -197,26 +207,30 @@ namespace NzCovidPass.Core.Tokens
                     .GetKeyAsync(token.Issuer, token.KeyId)
                     .ConfigureAwait(false);
             }
-            catch (Exception exception)
+            catch (VerificationKeyNotFoundException verificationKeyNotFoundException)
             {
-                _logger.LogError(exception, "Failed to retrieve verification key.");
+                _logger.LogError(verificationKeyNotFoundException, "Failed to retrieve verification key.");
 
                 return null;
             }
         }
 
-        private static byte[] GetSignedBytes(CwtSecurityToken token)
+        private static byte[] BuildSignatureStructure(CwtSecurityToken token)
         {
             // https://datatracker.ietf.org/doc/html/rfc8152#section-4.4
-            // Note this process assumes a COSE_Sign1 structure, which NZ Covid passes will be.
+            // Note this process assumes a COSE_Sign1 structure, which NZ Covid passes should be.
             var b = new ArrayBufferWriter<byte>();
             var w = new CborWriter(b);
 
             w.WriteBeginArray(4);
 
+            // context
             w.WriteString("Signature1");
+            // body_protected
             w.WriteByteString(token.HeaderBytes);
+            // external_aad
             w.WriteByteString(Array.Empty<byte>());
+            // payload
             w.WriteByteString(token.PayloadBytes);
 
             w.WriteEndArray(4);
