@@ -3,6 +3,7 @@ using Dahomey.Cbor.Serialization;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using NzCovidPass.Core.Models;
 using NzCovidPass.Core.Shared;
 using NzCovidPass.Core.Verification;
 
@@ -66,7 +67,16 @@ namespace NzCovidPass.Core.Tokens
                 return;
             }
 
-            // Now that we've validated the signature we can link the key and token.
+            ValidateCredential(context);
+
+            if (context.HasFailed)
+            {
+                _logger.LogError("Token credential is not valid");
+
+                return;
+            }
+
+            // Now that we've validated the claims and signature we can link the key and token.
             context.Token.SigningKey = verificationKey;
 
             context.Succeed();
@@ -115,9 +125,9 @@ namespace NzCovidPass.Core.Tokens
         {
             var token = context.Token;
 
-            if (!_verifierOptions.ValidAlgorithms.Contains(token.Algorithm))
+            if (string.IsNullOrEmpty(token.Algorithm) || !_verifierOptions.ValidAlgorithms.Contains(token.Algorithm))
             {
-                _logger.LogError("Algorithm validation failed [Expected = '{{ {Expected} }}', Actual = '{Actual}']", string.Join(", ", _verifierOptions.ValidAlgorithms), token.Algorithm);
+                _logger.LogError("Algorithm validation failed [Algorithm '{Actual}' is not in the valid algorithms set '{{ {ValidAlgorithms} }}']", token.Algorithm, string.Join(", ", _verifierOptions.ValidAlgorithms));
 
                 context.Fail(CwtSecurityTokenValidatorContext.AlgorithmValidationFailed(_verifierOptions.ValidAlgorithms));
             }
@@ -127,9 +137,9 @@ namespace NzCovidPass.Core.Tokens
         {
             var token = context.Token;
 
-            if (!_verifierOptions.ValidIssuers.Contains(token.Issuer))
+            if (string.IsNullOrEmpty(token.Issuer) || !_verifierOptions.ValidIssuers.Contains(token.Issuer))
             {
-                _logger.LogError("Issuer validation failed [Expected = '{{ {Expected} }}', Actual = '{Actual}']", string.Join(", ", _verifierOptions.ValidIssuers), token.Issuer);
+                _logger.LogError("Issuer validation failed [Issuer '{Actual}' is not in the valid issuers set '{{ {Expected} }}']", token.Issuer, string.Join(", ", _verifierOptions.ValidIssuers));
 
                 context.Fail(CwtSecurityTokenValidatorContext.IssuerValidationFailed(_verifierOptions.ValidIssuers));
             }
@@ -141,7 +151,7 @@ namespace NzCovidPass.Core.Tokens
 
             if (token.NotBefore > token.Expiry)
             {
-                _logger.LogError("Lifetime validation failed [Not Before ({NotBefore}) > Expiry ({Expiry})]", token.NotBefore, token.Expiry);
+                _logger.LogError("Lifetime validation failed [Not before '{NotBefore}' is after expiry '{Expiry}']", token.NotBefore, token.Expiry);
 
                 context.Fail(CwtSecurityTokenValidatorContext.LifetimeValidationFailed);
             }
@@ -150,14 +160,14 @@ namespace NzCovidPass.Core.Tokens
 
             if (token.NotBefore > utcNow)
             {
-                _logger.LogError("Lifetime validation failed [Not Before ({NotBefore}) > UtcNow ({UtcNow})]", token.NotBefore, utcNow);
+                _logger.LogError("Lifetime validation failed [Not before '{NotBefore}' is in the future]", token.NotBefore);
 
                 context.Fail(CwtSecurityTokenValidatorContext.NotBeforeValidationFailed);
             }
 
             if (token.Expiry < utcNow)
             {
-                _logger.LogError("Lifetime validation failed [Expiry ({Expiry}) > UtcNow ({UtcNow})]", token.Expiry, utcNow);
+                _logger.LogError("Lifetime validation failed [Expiry '{Expiry}' is in the past]", token.Expiry);
 
                 context.Fail(CwtSecurityTokenValidatorContext.ExpiryValidationFailed);
             }
@@ -199,12 +209,48 @@ namespace NzCovidPass.Core.Tokens
             }
         }
 
+        private void ValidateCredential(CwtSecurityTokenValidatorContext context)
+        {
+            _logger.LogDebug("Validating token credential");
+
+            var credential = context.Token.Credential;
+
+            if (credential is null)
+            {
+                _logger.LogError("Credential validation failed");
+
+                context.Fail(CwtSecurityTokenValidatorContext.CredentialValidationFailed);
+
+                return;
+            }
+
+            if (!credential.Context.Contains(VerifiableCredential.BaseContext) ||
+                !credential.Context.Contains(credential.CredentialSubject.Context))
+            {
+                _logger.LogError("Credential validation failed [Missing expected base context '{BaseContext}' or credential subject context '{CredentialSubjectContext}']", VerifiableCredential.BaseContext, credential.CredentialSubject.Context);
+
+                context.Fail(CwtSecurityTokenValidatorContext.CredentialContextValidationFailed(
+                    VerifiableCredential.BaseContext,
+                    credential.CredentialSubject.Context));
+            }
+
+            if (!credential.Type.Contains(VerifiableCredential.BaseCredentialType) ||
+                !credential.Type.Contains(credential.CredentialSubject.Type))
+            {
+                _logger.LogError("Credential validation failed [Missing expected base credential type '{BaseCredentialType}' or credential subject type '{CredentialSubjectType}']", VerifiableCredential.BaseCredentialType, credential.CredentialSubject.Type);
+
+                context.Fail(CwtSecurityTokenValidatorContext.CredentialTypeValidationFailed(
+                    VerifiableCredential.BaseCredentialType,
+                    credential.CredentialSubject.Type));
+            }
+        }
+
         private async Task<SecurityKey?> GetVerificationKeyAsync(CwtSecurityToken token)
         {
             try
             {
                 return await _verificationKeyProvider
-                    .GetKeyAsync(token.Issuer, token.KeyId)
+                    .GetKeyAsync(token.Issuer!, token.KeyId!)
                     .ConfigureAwait(false);
             }
             catch (VerificationKeyNotFoundException verificationKeyNotFoundException)

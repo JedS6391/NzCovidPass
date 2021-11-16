@@ -78,5 +78,22 @@ namespace NzCovidPass.Core.Tokens
         /// Signature validation failure reason.
         /// </summary>
         public static FailureReason SignatureValidationFailed => new(nameof(SignatureValidationFailed), "Signature validation failed.");
+
+        /// <summary>
+        /// Credential validation failure reason.
+        /// </summary>
+        public static FailureReason CredentialValidationFailed => new(nameof(CredentialValidationFailed), "Credential validation failed.");
+
+        /// <summary>
+        /// Credential context validation failure reason.
+        /// </summary>
+        public static FailureReason CredentialContextValidationFailed(string baseContext, string credentialContext) =>
+            new(nameof(CredentialContextValidationFailed), $"Credential context is missing an expected value [Base context = {baseContext}, Credential context = {credentialContext}]");
+
+        /// <summary>
+        /// Credential type validation failure reason.
+        /// </summary>
+        public static FailureReason CredentialTypeValidationFailed(string baseType, string credentialType) =>
+            new(nameof(CredentialTypeValidationFailed), $"Credential type is missing an expected value [Base type = {baseType}, Credential type = {credentialType}]");
     }
 }

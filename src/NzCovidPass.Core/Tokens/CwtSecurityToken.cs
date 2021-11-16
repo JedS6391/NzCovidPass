@@ -153,7 +153,7 @@ namespace NzCovidPass.Core.Tokens
                 {
                     var keyId = ReadRawClaimValue(_cborObject, ClaimIds.Header.KeyId);
 
-                    if (keyId == null)
+                    if (keyId is null)
                     {
                         return null;
                     }
@@ -224,7 +224,7 @@ namespace NzCovidPass.Core.Tokens
                 {
                     var cti = ReadRawClaimValue(_cborObject, ClaimIds.Payload.Cti);
 
-                    if (cti == null)
+                    if (cti is null)
                     {
                         return Guid.Empty;
                     }
@@ -290,7 +290,7 @@ namespace NzCovidPass.Core.Tokens
         {
             var rawClaimValue = ReadRawClaimValue(cborObject, claimId);
 
-            if (rawClaimValue == null)
+            if (rawClaimValue is null)
             {
                 return default;
             }
