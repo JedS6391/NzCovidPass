@@ -15,8 +15,8 @@ namespace NzCovidPass.Test.Unit;
 public class PassVerifierTests
 {
     private readonly PassVerifier _passVerifier;
-    private readonly ICborWebTokenReader _tokenReader;
-    private readonly ICborWebTokenValidator _tokenValidator;
+    private readonly ICwtSecurityTokenReader _tokenReader;
+    private readonly ICwtSecurityTokenValidator _tokenValidator;
 
     public PassVerifierTests()
     {
@@ -28,8 +28,8 @@ public class PassVerifierTests
             ValidIssuers = PassVerifierOptions.Defaults.ValidIssuers.ToHashSet(),
             ValidAlgorithms = PassVerifierOptions.Defaults.ValidAlgorithms.ToHashSet()
         });
-        var tokenReader = Substitute.For<ICborWebTokenReader>();
-        var tokenValidator = Substitute.For<ICborWebTokenValidator>();
+        var tokenReader = Substitute.For<ICwtSecurityTokenReader>();
+        var tokenValidator = Substitute.For<ICwtSecurityTokenValidator>();
 
         _passVerifier = new PassVerifier(logger, optionsAccessor, tokenReader, tokenValidator);
         _tokenReader = tokenReader;
@@ -93,10 +93,10 @@ public class PassVerifierTests
         const string PassPayload = "NZCP:/1/...";
 
         _tokenReader
-            .When(r => r.ReadToken(Arg.Any<CborWebTokenReaderContext>()))
+            .When(r => r.ReadToken(Arg.Any<CwtSecurityTokenReaderContext>()))
             .Do(ci =>
             {
-                var context = ci[0] as CborWebTokenReaderContext;
+                var context = ci[0] as CwtSecurityTokenReaderContext;
 
                 context.Fail();
             });
@@ -114,19 +114,19 @@ public class PassVerifierTests
         const string PassPayload = "NZCP:/1/...";
 
         _tokenReader
-            .When(r => r.ReadToken(Arg.Any<CborWebTokenReaderContext>()))
+            .When(r => r.ReadToken(Arg.Any<CwtSecurityTokenReaderContext>()))
             .Do(ci =>
             {
-                var context = ci[0] as CborWebTokenReaderContext;
+                var context = ci[0] as CwtSecurityTokenReaderContext;
 
                 context.Succeed(CreateToken());
             });
 
         _tokenValidator
-            .When(v => v.ValidateTokenAsync(Arg.Any<CborWebTokenValidatorContext>()))
+            .When(v => v.ValidateTokenAsync(Arg.Any<CwtSecurityTokenValidatorContext>()))
             .Do(ci =>
             {
-                var context = ci[0] as CborWebTokenValidatorContext;
+                var context = ci[0] as CwtSecurityTokenValidatorContext;
 
                 context.Fail();
             });
@@ -144,19 +144,19 @@ public class PassVerifierTests
         const string PassPayload = "NZCP:/1/...";
 
         _tokenReader
-            .When(r => r.ReadToken(Arg.Any<CborWebTokenReaderContext>()))
+            .When(r => r.ReadToken(Arg.Any<CwtSecurityTokenReaderContext>()))
             .Do(ci =>
             {
-                var context = ci[0] as CborWebTokenReaderContext;
+                var context = ci[0] as CwtSecurityTokenReaderContext;
 
                 context.Succeed(CreateToken());
             });
 
         _tokenValidator
-            .When(v => v.ValidateTokenAsync(Arg.Any<CborWebTokenValidatorContext>()))
+            .When(v => v.ValidateTokenAsync(Arg.Any<CwtSecurityTokenValidatorContext>()))
             .Do(ci =>
             {
-                var context = ci[0] as CborWebTokenValidatorContext;
+                var context = ci[0] as CwtSecurityTokenValidatorContext;
 
                 context.Succeed();
             });
@@ -186,7 +186,7 @@ public class PassVerifierTests
         Assert.Empty(result.FailureReasons);
     }
 
-    private static CborWebToken CreateToken()
+    private static CwtSecurityToken CreateToken()
     {
         var credentialSubject = new CborObject(new Dictionary<CborValue, CborValue>()
         {
@@ -202,14 +202,14 @@ public class PassVerifierTests
             { "credentialSubject", credentialSubject }
         });
 
-        return new CborWebToken(
-            new CborWebToken.Header(new CborObject(), ReadOnlyMemory<byte>.Empty),
-            new CborWebToken.Payload(
+        return new CwtSecurityToken(
+            new CwtSecurityToken.Header(new CborObject(), ReadOnlyMemory<byte>.Empty),
+            new CwtSecurityToken.Payload(
                 new CborObject(new Dictionary<CborValue, CborValue>()
                 {
                     { "vc", verifiableCredential }
                 }),
                 ReadOnlyMemory<byte>.Empty),
-            new CborWebToken.Signature(ReadOnlyMemory<byte>.Empty));
+            new CwtSecurityToken.Signature(ReadOnlyMemory<byte>.Empty));
     }
 }

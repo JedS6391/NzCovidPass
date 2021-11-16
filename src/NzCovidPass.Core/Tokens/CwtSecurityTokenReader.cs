@@ -5,22 +5,22 @@ using NzCovidPass.Core.Shared;
 
 namespace NzCovidPass.Core.Tokens
 {
-    /// <inheritdoc cref="ICborWebTokenReader" />
-    public class CborWebTokenReader : ICborWebTokenReader
+    /// <inheritdoc cref="ICwtSecurityTokenReader" />
+    public class CwtSecurityTokenReader : ICwtSecurityTokenReader
     {
-        private readonly ILogger<CborWebTokenReader> _logger;
+        private readonly ILogger<CwtSecurityTokenReader> _logger;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="CborWebTokenReader" /> class.
+        /// Initializes a new instance of the <see cref="CwtSecurityTokenReader" /> class.
         /// </summary>
         /// <param name="logger">An <see cref="ILogger{TCategoryName}" /> instance used for writing log messages.</param>
-        public CborWebTokenReader(ILogger<CborWebTokenReader> logger)
+        public CwtSecurityTokenReader(ILogger<CwtSecurityTokenReader> logger)
         {
             _logger = Requires.NotNull(logger);
         }
 
         /// <inheritdoc />
-        public void ReadToken(CborWebTokenReaderContext context)
+        public void ReadToken(CwtSecurityTokenReaderContext context)
         {
             ArgumentNullException.ThrowIfNull(context);
 
@@ -45,10 +45,10 @@ namespace NzCovidPass.Core.Tokens
                 var header = Cbor.Deserialize<CborObject>(rawHeaderBytes.Span);
                 var payload = Cbor.Deserialize<CborObject>(rawPayloadBytes.Span);
 
-                var token = new CborWebToken(
-                    new CborWebToken.Header(header, rawHeaderBytes),
-                    new CborWebToken.Payload(payload, rawPayloadBytes),
-                    new CborWebToken.Signature(rawSignatureBytes));
+                var token = new CwtSecurityToken(
+                    new CwtSecurityToken.Header(header, rawHeaderBytes),
+                    new CwtSecurityToken.Payload(payload, rawPayloadBytes),
+                    new CwtSecurityToken.Signature(rawSignatureBytes));
 
                 context.Succeed(token);
             }
@@ -56,13 +56,13 @@ namespace NzCovidPass.Core.Tokens
             {
                 _logger.LogError(formatException, "Failed to decode base-32 payload.");
 
-                context.Fail(CborWebTokenReaderContext.InvalidBase32Payload);
+                context.Fail(CwtSecurityTokenReaderContext.InvalidBase32Payload);
             }
             catch (CborException cborException)
             {
                 _logger.LogError(cborException, "Failed to decode CBOR structure");
 
-                context.Fail(CborWebTokenReaderContext.FailedToDecodeCborStructure);
+                context.Fail(CwtSecurityTokenReaderContext.FailedToDecodeCborStructure);
             }
         }
 

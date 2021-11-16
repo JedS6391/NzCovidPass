@@ -27,8 +27,8 @@ namespace NzCovidPass.Core.Shared
 
             services.AddHttpClient(nameof(HttpDecentralizedIdentifierDocumentRetriever), configureClient ?? ConfigureDefaultClient);
 
-            services.AddSingleton<ICborWebTokenReader, CborWebTokenReader>();
-            services.AddSingleton<ICborWebTokenValidator, CborWebTokenValidator>();
+            services.AddSingleton<ICwtSecurityTokenReader, CwtSecurityTokenReader>();
+            services.AddSingleton<ICwtSecurityTokenValidator, CwtSecurityTokenValidator>();
             services.AddSingleton<IVerificationKeyProvider, DecentralizedIdentifierDocumentVerificationKeyProvider>();
             services.AddSingleton<IDecentralizedIdentifierDocumentRetriever, HttpDecentralizedIdentifierDocumentRetriever>();
             services.AddSingleton<PassVerifier>();

@@ -5,16 +5,16 @@ namespace NzCovidPass.Core.Tokens
     /// <summary>
     /// Encapsulates details of the token read process.
     /// </summary>
-    public class CborWebTokenReaderContext : ValidationContext
+    public class CwtSecurityTokenReaderContext : ValidationContext
     {
         private readonly string _base32Payload;
-        private CborWebToken? _token;
+        private CwtSecurityToken? _token;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="CborWebTokenReaderContext" /> class.
+        /// Initializes a new instance of the <see cref="CwtSecurityTokenReaderContext" /> class.
         /// </summary>
         /// <param name="base32Payload">The base-32 string to attempt to read as a CWT.</param>
-        public CborWebTokenReaderContext(string base32Payload)
+        public CwtSecurityTokenReaderContext(string base32Payload)
         {
             _base32Payload = Requires.NotNull(base32Payload);
         }
@@ -35,7 +35,7 @@ namespace NzCovidPass.Core.Tokens
         /// Attempting to access when <see cref="ValidationContext.HasSucceeded" /> is <see langword="false" /> will throw an <see cref="InvalidOperationException" />.
         /// </para>
         /// </remarks>
-        public CborWebToken Token => (HasSucceeded && _token is not null) ?
+        public CwtSecurityToken Token => (HasSucceeded && _token is not null) ?
             _token :
             throw new InvalidOperationException("Token has not been set.");
 
@@ -43,7 +43,7 @@ namespace NzCovidPass.Core.Tokens
         /// Indicates that validation has succeeded for this context, with the provided <paramref name="token" />.
         /// </summary>
         /// <param name="token">The verified token.</param>
-        public void Succeed(CborWebToken token)
+        public void Succeed(CwtSecurityToken token)
         {
             base.Succeed();
 
