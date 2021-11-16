@@ -197,7 +197,7 @@ public class PassVerifierTests
         var verifiableCredential = new CborObject(new Dictionary<CborValue, CborValue>()
         {
             { "version", "1.0.0" },
-            { "context", new CborArray("https://www.w3.org/2018/credentials/v1", "https://nzcp.covid19.health.nz/contexts/v1") },
+            { "@context", new CborArray("https://www.w3.org/2018/credentials/v1", "https://nzcp.covid19.health.nz/contexts/v1") },
             { "type", new CborArray("VerifiableCredential", "PublicCovidPass") },
             { "credentialSubject", credentialSubject }
         });
