@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using NzCovidPass.Core.Shared;
 
 namespace NzCovidPass.Core.Models
 {
@@ -25,10 +26,10 @@ namespace NzCovidPass.Core.Models
             IReadOnlyList<string> type,
             TCredential credentialSubject)
         {
-            Version = version;
-            Context = context;
-            Type = type;
-            CredentialSubject = credentialSubject;
+            Version = Requires.NotNull(version);
+            Context = Requires.NotNull(context);
+            Type = Requires.NotNull(type);
+            CredentialSubject = Requires.NotNull(credentialSubject);
         }
 
         /// <summary>

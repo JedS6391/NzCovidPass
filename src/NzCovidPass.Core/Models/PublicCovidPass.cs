@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using NzCovidPass.Core.Shared;
 
 namespace NzCovidPass.Core.Models
 {
@@ -19,8 +20,8 @@ namespace NzCovidPass.Core.Models
         [JsonConstructor]
         public PublicCovidPass(string givenName, string familyName, DateTimeOffset dateOfBirth)
         {
-            GivenName = givenName;
-            FamilyName = familyName;
+            GivenName = Requires.NotNull(givenName);
+            FamilyName = Requires.NotNull(familyName);
             DateOfBirth = dateOfBirth;
         }
 
