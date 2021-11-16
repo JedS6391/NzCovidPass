@@ -9,6 +9,9 @@ namespace NzCovidPass.Core.Shared
     /// </summary>
     public static class ServiceCollectionExtensions
     {
+        private static Action<PassVerifierOptions> DefaultConfigureOptions => (options) => { };
+        private static Action<HttpClient> DefaultConfigureClient => (client) => { };
+
         /// <summary>
         /// Adds <see cref="PassVerifier" /> and related services to the <see cref="IServiceCollection" />.
         /// </summary>
@@ -23,9 +26,9 @@ namespace NzCovidPass.Core.Shared
         {
             ArgumentNullException.ThrowIfNull(services);
 
-            services.Configure<PassVerifierOptions>(configureOptions ?? ConfigureDefaultOptions);
+            services.Configure<PassVerifierOptions>(configureOptions ?? DefaultConfigureOptions);
 
-            services.AddHttpClient(nameof(HttpDecentralizedIdentifierDocumentRetriever), configureClient ?? ConfigureDefaultClient);
+            services.AddHttpClient(nameof(HttpDecentralizedIdentifierDocumentRetriever), configureClient ?? DefaultConfigureClient);
 
             services.AddSingleton<ICwtSecurityTokenReader, CwtSecurityTokenReader>();
             services.AddSingleton<ICwtSecurityTokenValidator, CwtSecurityTokenValidator>();
@@ -34,18 +37,6 @@ namespace NzCovidPass.Core.Shared
             services.AddSingleton<PassVerifier>();
 
             return services;
-        }
-
-        private static void ConfigureDefaultOptions(PassVerifierOptions options)
-        {
-            options.Prefix = PassVerifierOptions.Defaults.Prefix;
-            options.Version = PassVerifierOptions.Defaults.Version;
-            options.ValidIssuers = PassVerifierOptions.Defaults.ValidIssuers.ToHashSet();
-            options.ValidAlgorithms = PassVerifierOptions.Defaults.ValidAlgorithms.ToHashSet();
-        }
-
-        private static void ConfigureDefaultClient(HttpClient client)
-        {
         }
     }
 }
