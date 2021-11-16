@@ -59,7 +59,7 @@ public class PassVerifierTests
 
         AssertFailedResult(result);
 
-        Assert.Contains(PassVerifierContext.PrefixValidationFailed(requiredPrefix: "NZCP:"), result.FailureReasons);
+        Assert.Contains(PassVerifierContext.PrefixValidationFailed(validPrefix: "NZCP:"), result.FailureReasons);
     }
 
     [Theory]
@@ -72,7 +72,7 @@ public class PassVerifierTests
 
         AssertFailedResult(result);
 
-        Assert.Contains(PassVerifierContext.VersionValidationFailed(requiredVersion: 1), result.FailureReasons);
+        Assert.Contains(PassVerifierContext.VersionValidationFailed(validVersion: 1), result.FailureReasons);
     }
 
     [Theory]
