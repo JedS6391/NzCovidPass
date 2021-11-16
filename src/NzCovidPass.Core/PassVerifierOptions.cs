@@ -10,22 +10,22 @@ namespace NzCovidPass.Core
         /// <summary>
         /// Gets or sets the value that is required in the payload prefix component.
         /// </summary>
-        public string Prefix { get; set; } = string.Empty;
+        public string Prefix { get; set; } = Defaults.Prefix;
 
         /// <summary>
         /// Gets or sets the value that is required in the payload version component.
         /// </summary>
-        public int Version { get; set; }
+        public int Version { get; set; } = Defaults.Version;
 
         /// <summary>
         /// Gets or sets the collection of valid issuers that will be used to check against the token's issuer.
         /// </summary>
-        public IReadOnlySet<string> ValidIssuers { get; set; } = new HashSet<string>();
+        public IReadOnlySet<string> ValidIssuers { get; set; } = Defaults.ValidIssuers.ToHashSet();
 
         /// <summary>
         /// Gets or sets the collection of valid algorithms that will be used to check against the token's algorithm.
         /// </summary>
-        public IReadOnlySet<string> ValidAlgorithms { get; set; } = new HashSet<string>();
+        public IReadOnlySet<string> ValidAlgorithms { get; set; } = Defaults.ValidAlgorithms.ToHashSet();
 
         /// <summary>
         /// Gets or sets the amount of time to cache security keys for.
