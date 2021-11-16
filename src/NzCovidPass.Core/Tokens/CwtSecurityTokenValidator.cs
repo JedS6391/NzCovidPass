@@ -268,18 +268,19 @@ namespace NzCovidPass.Core.Tokens
             var b = new ArrayBufferWriter<byte>();
             var w = new CborWriter(b);
 
-            w.WriteBeginArray(4);
+            var signatureStructure = new object[]
+            {
+                // context
+                "Signature1",
+                // body_protected
+                token.HeaderBytes,
+                // external_aad
+                Array.Empty<byte>(),
+                // payload
+                token.PayloadBytes
+            };
 
-            // context
-            w.WriteString("Signature1");
-            // body_protected
-            w.WriteByteString(token.HeaderBytes);
-            // external_aad
-            w.WriteByteString(Array.Empty<byte>());
-            // payload
-            w.WriteByteString(token.PayloadBytes);
-
-            w.WriteEndArray(4);
+            w.WriteArray(signatureStructure);
 
             return b.WrittenMemory.ToArray();
         }
