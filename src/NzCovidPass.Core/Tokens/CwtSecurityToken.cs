@@ -37,7 +37,7 @@ namespace NzCovidPass.Core.Tokens
         }
 
         /// <inheritdoc />
-        public override string Id => Jti;
+        public override string? Id => Jti;
 
         /// <inheritdoc />
         public override string? Issuer => _payload.Issuer;
@@ -70,7 +70,7 @@ namespace NzCovidPass.Core.Tokens
         /// <remarks>
         /// <see href="https://nzcp.covid19.health.nz/#mapping-jti-cti" />
         /// </remarks>
-        public string Jti => _payload.Jti;
+        public string? Jti => _payload.Jti;
 
         /// <summary>
         /// Gets the value of the <c>cti</c> claim from the CWT payload.
@@ -213,7 +213,7 @@ namespace NzCovidPass.Core.Tokens
             /// <summary>
             /// Gets the value of the <c>cti</c> claim, mapped to a JTI value.
             /// </summary>
-            public string Jti => $"urn:uuid:{Cti:D}";
+            public string? Jti => Cti == Guid.Empty ? null : $"urn:uuid:{Cti:D}";
 
             /// <summary>
             /// Gets the value of the <c>cti</c> claim.
@@ -324,7 +324,9 @@ namespace NzCovidPass.Core.Tokens
 
                 public static readonly Dictionary<int, string> AlgorithmMap = new Dictionary<int, string>()
                 {
-                    { -7, SecurityAlgorithms.EcdsaSha256 }
+                    { -7, SecurityAlgorithms.EcdsaSha256 },
+                    { -16, SecurityAlgorithms.Sha256 },
+                    { -44, SecurityAlgorithms.Sha512 },
                 };
             }
 
