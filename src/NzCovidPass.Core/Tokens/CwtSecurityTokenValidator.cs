@@ -190,6 +190,9 @@ namespace NzCovidPass.Core.Tokens
                 _logger.LogError("Signature validation failed [Algorithm '{Algorithm}' is not supported for key type '{KeyType}']", algorithm, key.GetType().Name);
 
                 context.Fail(CwtSecurityTokenValidatorContext.SignatureValidationFailed);
+
+                // Not able to continue signature validation
+                return;
             }
 
             var signatureProvider = cryptoProviderFactory.CreateForVerifying(key, algorithm);
