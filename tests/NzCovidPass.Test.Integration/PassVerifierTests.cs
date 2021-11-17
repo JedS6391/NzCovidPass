@@ -23,13 +23,10 @@ public class PassVerifierTests
     [Fact]
     public async Task VerifyAsync_ValidPass_ReturnsSuccessResult()
     {
-        // Arrange
         var verifier = GetVerifier();
 
-        // Act
         var result = await verifier.VerifyAsync(SampleCovidPass.Valid);
 
-        // Assert
         Assert.NotNull(result);
         Assert.True(result.HasSucceeded);
         Assert.False(result.HasFailed);
@@ -51,13 +48,10 @@ public class PassVerifierTests
     [InlineData(SampleCovidPass.InvalidBase32Payload)]
     public async Task VerifyAsync_InvalidPass_ReturnsFailResult(string passPayload)
     {
-        // Arrange
         var verifier = GetVerifier();
 
-        // Act
         var result = await verifier.VerifyAsync(passPayload);
 
-        // Assert
         Assert.NotNull(result);
         Assert.False(result.HasSucceeded);
         Assert.True(result.HasFailed);
