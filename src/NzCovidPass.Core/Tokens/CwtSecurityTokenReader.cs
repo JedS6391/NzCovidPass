@@ -34,13 +34,22 @@ namespace NzCovidPass.Core.Tokens
 
                 _logger.LogDebug("Decoded base-32 payload bytes (hex) '{Payload}'", Convert.ToHexString(decodedPayloadBytes));
 
-                var decodedCborStructure = Cbor.Deserialize<CborArray>(decodedPayloadBytes);
+                var decodedCoseStructure = Cbor.Deserialize<CborArray>(decodedPayloadBytes);
 
-                _logger.LogDebug("Decoded CBOR structure: {Structure}", decodedCborStructure);
+                _logger.LogDebug("Decoded COSE structure: {Structure}", decodedCoseStructure);
 
-                var rawHeaderBytes = decodedCborStructure[0].GetValueBytes();
-                var rawPayloadBytes = decodedCborStructure[2].GetValueBytes();
-                var rawSignatureBytes = decodedCborStructure[3].GetValueBytes();
+                if (!IsValidCoseStructure(decodedCoseStructure))
+                {
+                    _logger.LogError("Payload is not a valid COSE_Sign1 structure.");
+
+                    context.Fail(CwtSecurityTokenReaderContext.InvalidCoseStructure);
+
+                    return;
+                }
+
+                var rawHeaderBytes = decodedCoseStructure[0].GetValueBytes();
+                var rawPayloadBytes = decodedCoseStructure[2].GetValueBytes();
+                var rawSignatureBytes = decodedCoseStructure[3].GetValueBytes();
 
                 var header = Cbor.Deserialize<CborObject>(rawHeaderBytes.Span);
                 var payload = Cbor.Deserialize<CborObject>(rawPayloadBytes.Span);
@@ -76,6 +85,33 @@ namespace NzCovidPass.Core.Tokens
             }
 
             return base32Payload;
+        }
+
+        private bool IsValidCoseStructure(CborArray coseStructure)
+        {
+            // https://datatracker.ietf.org/doc/html/rfc8152
+            // Note this process assumes a COSE_Sign1 structure, which NZ Covid passes should be.
+
+            // We expect a structure in the form [ protected headers, unprotected headers, payload, signature ]
+            if (coseStructure.Count != 4)
+            {
+                _logger.LogError("COSE structure does not have the expected form '[ protected headers, unprotected headers, payload, signature ]'");
+
+                return false;
+            }
+
+            // We expect the structure to have the following types of CBOR values [ bytestring, map, bytestring, bytestring ]
+            if (coseStructure[0].Type != CborValueType.ByteString ||
+                coseStructure[1].Type != CborValueType.Object ||
+                coseStructure[2].Type != CborValueType.ByteString ||
+                coseStructure[3].Type != CborValueType.ByteString)
+            {
+                _logger.LogError("COSE structure does not have the expected CBOR types '[ bytestring, map, bytestring, bytestring ]'");
+
+                return false;
+            }
+
+            return true;
         }
     }
 }

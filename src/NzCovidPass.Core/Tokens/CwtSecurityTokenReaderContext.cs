@@ -59,5 +59,10 @@ namespace NzCovidPass.Core.Tokens
         /// Failed to decode CBOR structure failure reason.
         /// </summary>
         public static FailureReason FailedToDecodeCborStructure => new(nameof(FailedToDecodeCborStructure), "Failed to decode CBOR structure.");
+
+        /// <summary>
+        /// Invalid COSE structure failure reason.
+        /// </summary>
+        public static FailureReason InvalidCoseStructure => new(nameof(InvalidCoseStructure), "Payload is not a valid COSE_Sign1 structure.");
     }
 }
