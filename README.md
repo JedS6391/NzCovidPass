@@ -34,7 +34,37 @@ else
 }
 ```
 
-Further examples of usage can be found in the [demos](./demos/) folder.
+Full examples of usage can be found in the [demos](./demos/) folder.
+
+### Advanced usage
+
+#### Logging
+
+The `PassVerifier` logs message via the `Microsoft.extensions.Logging.ILogger<TCategoryName>` abstraction. See the [.NET documentation](https://docs.microsoft.com/en-us/dotnet/core/extensions/logging?tabs=command-line) for more details.
+
+#### Customising verifier options
+
+```cs
+services.AddNzCovidPassVerifier(options =>
+{
+    var validIssuers = PassVerifierOptions.Defaults.ValidIssuers.ToHashSet();
+
+    // Add test issuer
+    validIssuers.Add("did:web:nzcp.covid19.health.nz");
+
+    options.ValidIssuers = validIssuers;    
+});
+```
+
+#### Custom verification keys
+
+With the default configuration, verification keys are resolved via HTTP from the DID document associated with the  issuer and key ID contained in the pass payload.
+
+If you wish to use a static key (e.g. to support offline usage) or for testing purposes, a custom `IVerificationKeyProvider` can be registered:
+
+```cs
+services.Replace(ServiceDescriptor.Singleton<IVerificationKeyProvider, CustomVerificationKeyProvider>());
+```
 
 ## Development
 
