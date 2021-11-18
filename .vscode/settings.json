@@ -5,6 +5,7 @@
         "**/obj": true
     },
     "cSpell.words": [
-        "Cbor"
+        "cbor",
+        "cose"
     ]
 }

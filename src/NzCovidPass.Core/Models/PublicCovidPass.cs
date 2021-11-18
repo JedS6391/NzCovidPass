@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using NzCovidPass.Core.Shared;
 
 namespace NzCovidPass.Core.Models
 {
@@ -8,7 +9,7 @@ namespace NzCovidPass.Core.Models
     /// <remarks>
     /// <see href="https://nzcp.covid19.health.nz/#publiccovidpass" />
     /// </remarks>
-    public class PublicCovidPass
+    public class PublicCovidPass : ICredentialSubject
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="PublicCovidPass" /> class.
@@ -19,7 +20,8 @@ namespace NzCovidPass.Core.Models
         [JsonConstructor]
         public PublicCovidPass(string givenName, string familyName, DateTimeOffset dateOfBirth)
         {
-            GivenName = givenName;
+            GivenName = Requires.NotNull(givenName);
+            // Family name is optional
             FamilyName = familyName;
             DateOfBirth = dateOfBirth;
         }
@@ -44,5 +46,21 @@ namespace NzCovidPass.Core.Models
         [JsonPropertyName("dob")]
         [JsonInclude]
         public DateTimeOffset DateOfBirth { get; private set; }
+
+        /// <summary>
+        /// The JSON-LD context property value associated with the <c>PublicCovidPass</c> verifiable credential type.
+        /// </summary>
+        /// <remarks>
+        /// <see href="https://nzcp.covid19.health.nz/#verifiable-credential-claim-structure" />
+        /// </remarks>
+        public string Context => "https://nzcp.covid19.health.nz/contexts/v1";
+
+        /// <summary>
+        /// The type property value associated with the <c>PublicCovidPass</c> verifiable credential type.
+        /// </summary>
+        /// <remarks>
+        /// <see href="https://nzcp.covid19.health.nz/#publiccovidpass" />
+        /// </remarks>
+        public string Type => "PublicCovidPass";
     }
 }

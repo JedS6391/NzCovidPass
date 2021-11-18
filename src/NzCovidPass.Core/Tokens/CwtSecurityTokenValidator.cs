@@ -3,6 +3,7 @@ using Dahomey.Cbor.Serialization;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using NzCovidPass.Core.Models;
 using NzCovidPass.Core.Shared;
 using NzCovidPass.Core.Verification;
 
@@ -38,10 +39,7 @@ namespace NzCovidPass.Core.Tokens
         {
             ArgumentNullException.ThrowIfNull(context);
 
-            var token = context.Token;
-
-            _logger.LogDebug("Validating token payload");
-
+            ValidateHeader(context);
             ValidatePayload(context);
 
             if (context.HasFailed)
@@ -51,9 +49,7 @@ namespace NzCovidPass.Core.Tokens
                 return;
             }
 
-            _logger.LogDebug("Validating token signature");
-
-            var verificationKey = await GetVerificationKeyAsync(token).ConfigureAwait(false);
+            var verificationKey = await GetVerificationKeyAsync(context.Token).ConfigureAwait(false);
 
             if (verificationKey is null)
             {
@@ -71,33 +67,53 @@ namespace NzCovidPass.Core.Tokens
                 return;
             }
 
-            token.SigningKey = verificationKey;
+            ValidateCredential(context);
+
+            if (context.HasFailed)
+            {
+                _logger.LogError("Token credential is not valid");
+
+                return;
+            }
+
+            // Now that we've validated the claims and signature we can link the key and token.
+            context.Token.SigningKey = verificationKey;
 
             context.Succeed();
 
             return;
         }
 
+        private void ValidateHeader(CwtSecurityTokenValidatorContext context)
+        {
+            _logger.LogDebug("Validating token header");
+
+            ValidateHeaderRequiredClaims(context);
+            ValidateAlgorithm(context);
+        }
+
         private void ValidatePayload(CwtSecurityTokenValidatorContext context)
         {
-            ValidateRequiredClaims(context);
-            ValidateAlgorithm(context);
+            _logger.LogDebug("Validating token payload");
+
+            ValidatePayloadRequiredClaims(context);
             ValidateIssuer(context);
             ValidateLifetime(context);
         }
 
-        private void ValidateRequiredClaims(CwtSecurityTokenValidatorContext context)
+        private void ValidateHeaderRequiredClaims(CwtSecurityTokenValidatorContext context)
         {
-            var token = context.Token;
-
-            if (string.IsNullOrEmpty(token.KeyId))
+            if (string.IsNullOrEmpty(context.Token.KeyId))
             {
                 _logger.LogError("Key ID validation failed");
 
                 context.Fail(CwtSecurityTokenValidatorContext.KeyIdValidationFailed);
             }
+        }
 
-            if (string.IsNullOrEmpty(token.Id))
+        private void ValidatePayloadRequiredClaims(CwtSecurityTokenValidatorContext context)
+        {
+            if (string.IsNullOrEmpty(context.Token.Id))
             {
                 _logger.LogError("Token ID validation failed");
 
@@ -109,11 +125,11 @@ namespace NzCovidPass.Core.Tokens
         {
             var token = context.Token;
 
-            if (!_verifierOptions.ValidAlgorithms.Contains(token.Algorithm))
+            if (string.IsNullOrEmpty(token.Algorithm) || !_verifierOptions.ValidAlgorithms.Contains(token.Algorithm))
             {
-                _logger.LogError("Algorithm validation failed [Expected = '{{ {Expected} }}', Actual = '{Actual}']", string.Join(", ", _verifierOptions.ValidAlgorithms), token.Algorithm);
+                _logger.LogError("Algorithm validation failed [Algorithm '{Actual}' is not in the valid algorithms set '{{ {ValidAlgorithms} }}']", token.Algorithm, string.Join(", ", _verifierOptions.ValidAlgorithms));
 
-                context.Fail(CwtSecurityTokenValidatorContext.AlgorithmValidationFailed);
+                context.Fail(CwtSecurityTokenValidatorContext.AlgorithmValidationFailed(_verifierOptions.ValidAlgorithms));
             }
         }
 
@@ -121,11 +137,11 @@ namespace NzCovidPass.Core.Tokens
         {
             var token = context.Token;
 
-            if (!_verifierOptions.ValidIssuers.Contains(token.Issuer))
+            if (string.IsNullOrEmpty(token.Issuer) || !_verifierOptions.ValidIssuers.Contains(token.Issuer))
             {
-                _logger.LogError("Issuer validation failed [Expected = '{{ {Expected} }}', Actual = '{Actual}']", string.Join(", ", _verifierOptions.ValidIssuers), token.Issuer);
+                _logger.LogError("Issuer validation failed [Issuer '{Actual}' is not in the valid issuers set '{{ {Expected} }}']", token.Issuer, string.Join(", ", _verifierOptions.ValidIssuers));
 
-                context.Fail(CwtSecurityTokenValidatorContext.IssuerValidationFailed);
+                context.Fail(CwtSecurityTokenValidatorContext.IssuerValidationFailed(_verifierOptions.ValidIssuers));
             }
         }
 
@@ -135,7 +151,7 @@ namespace NzCovidPass.Core.Tokens
 
             if (token.NotBefore > token.Expiry)
             {
-                _logger.LogError("Lifetime validation failed [Not Before ({NotBefore}) > Expiry ({Expiry})]", token.NotBefore, token.Expiry);
+                _logger.LogError("Lifetime validation failed [Not before '{NotBefore}' is after expiry '{Expiry}']", token.NotBefore, token.Expiry);
 
                 context.Fail(CwtSecurityTokenValidatorContext.LifetimeValidationFailed);
             }
@@ -144,26 +160,28 @@ namespace NzCovidPass.Core.Tokens
 
             if (token.NotBefore > utcNow)
             {
-                _logger.LogError("Lifetime validation failed [Not Before ({NotBefore}) > UtcNow ({UtcNow})]", token.NotBefore, utcNow);
+                _logger.LogError("Lifetime validation failed [Not before '{NotBefore}' is in the future]", token.NotBefore);
 
-                context.Fail(CwtSecurityTokenValidatorContext.LifetimeValidationFailed);
+                context.Fail(CwtSecurityTokenValidatorContext.NotBeforeValidationFailed);
             }
 
             if (token.Expiry < utcNow)
             {
-                _logger.LogError("Lifetime validation failed [Expiry ({Expiry}) > UtcNow ({UtcNow})]", token.Expiry, utcNow);
+                _logger.LogError("Lifetime validation failed [Expiry '{Expiry}' is in the past]", token.Expiry);
 
-                context.Fail(CwtSecurityTokenValidatorContext.LifetimeValidationFailed);
+                context.Fail(CwtSecurityTokenValidatorContext.ExpiryValidationFailed);
             }
         }
 
         private void ValidateSignature(CwtSecurityTokenValidatorContext context, SecurityKey key)
         {
+            _logger.LogDebug("Validating token signature");
+
             var token = context.Token;
             var algorithm = token.Algorithm;
             var signature = token.SignatureBytes;
 
-            var signedBytes = GetSignedBytes(token);
+            var signatureStructure = BuildSignatureStructure(token);
 
             var cryptoProviderFactory = key.CryptoProviderFactory;
 
@@ -172,14 +190,19 @@ namespace NzCovidPass.Core.Tokens
                 _logger.LogError("Signature validation failed [Algorithm '{Algorithm}' is not supported for key type '{KeyType}']", algorithm, key.GetType().Name);
 
                 context.Fail(CwtSecurityTokenValidatorContext.SignatureValidationFailed);
+
+                // Not able to continue signature validation
+                return;
             }
 
             var signatureProvider = cryptoProviderFactory.CreateForVerifying(key, algorithm);
 
             try
             {
-                if (!signatureProvider.Verify(signedBytes, signature))
+                if (!signatureProvider.Verify(signatureStructure, signature))
                 {
+                    _logger.LogError("Signature validation failed [Signature computed using {Algorithm} and {Key} is not consistent with the provided signature]", algorithm, key.GetType().Name);
+
                     context.Fail(CwtSecurityTokenValidatorContext.SignatureValidationFailed);
                 }
             }
@@ -189,37 +212,78 @@ namespace NzCovidPass.Core.Tokens
             }
         }
 
+        private void ValidateCredential(CwtSecurityTokenValidatorContext context)
+        {
+            _logger.LogDebug("Validating token credential");
+
+            var credential = context.Token.Credential;
+
+            if (credential is null)
+            {
+                _logger.LogError("Credential validation failed");
+
+                context.Fail(CwtSecurityTokenValidatorContext.CredentialValidationFailed);
+
+                return;
+            }
+
+            if (!credential.Context.Contains(VerifiableCredential.BaseContext) ||
+                !credential.Context.Contains(credential.CredentialSubject.Context))
+            {
+                _logger.LogError("Credential validation failed [Missing expected base context '{BaseContext}' or credential subject context '{CredentialSubjectContext}']", VerifiableCredential.BaseContext, credential.CredentialSubject.Context);
+
+                context.Fail(CwtSecurityTokenValidatorContext.CredentialContextValidationFailed(
+                    VerifiableCredential.BaseContext,
+                    credential.CredentialSubject.Context));
+            }
+
+            if (!credential.Type.Contains(VerifiableCredential.BaseCredentialType) ||
+                !credential.Type.Contains(credential.CredentialSubject.Type))
+            {
+                _logger.LogError("Credential validation failed [Missing expected base credential type '{BaseCredentialType}' or credential subject type '{CredentialSubjectType}']", VerifiableCredential.BaseCredentialType, credential.CredentialSubject.Type);
+
+                context.Fail(CwtSecurityTokenValidatorContext.CredentialTypeValidationFailed(
+                    VerifiableCredential.BaseCredentialType,
+                    credential.CredentialSubject.Type));
+            }
+        }
+
         private async Task<SecurityKey?> GetVerificationKeyAsync(CwtSecurityToken token)
         {
             try
             {
                 return await _verificationKeyProvider
-                    .GetKeyAsync(token.Issuer, token.KeyId)
+                    .GetKeyAsync(token.Issuer!, token.KeyId!)
                     .ConfigureAwait(false);
             }
-            catch (Exception exception)
+            catch (VerificationKeyNotFoundException verificationKeyNotFoundException)
             {
-                _logger.LogError(exception, "Failed to retrieve verification key.");
+                _logger.LogError(verificationKeyNotFoundException, "Failed to retrieve verification key.");
 
                 return null;
             }
         }
 
-        private static byte[] GetSignedBytes(CwtSecurityToken token)
+        private static byte[] BuildSignatureStructure(CwtSecurityToken token)
         {
             // https://datatracker.ietf.org/doc/html/rfc8152#section-4.4
-            // Note this process assumes a COSE_Sign1 structure, which NZ Covid passes will be.
+            // Note this process assumes a COSE_Sign1 structure, which NZ Covid passes should be.
             var b = new ArrayBufferWriter<byte>();
             var w = new CborWriter(b);
 
-            w.WriteBeginArray(4);
+            var signatureStructure = new object[]
+            {
+                // context
+                "Signature1",
+                // body_protected
+                token.HeaderBytes,
+                // external_aad
+                Array.Empty<byte>(),
+                // payload
+                token.PayloadBytes
+            };
 
-            w.WriteString("Signature1");
-            w.WriteByteString(token.HeaderBytes);
-            w.WriteByteString(Array.Empty<byte>());
-            w.WriteByteString(token.PayloadBytes);
-
-            w.WriteEndArray(4);
+            w.WriteArray(signatureStructure);
 
             return b.WrittenMemory.ToArray();
         }

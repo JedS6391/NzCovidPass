@@ -1,12 +1,11 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
-using Dahomey.Cbor.ObjectModel;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 using NSubstitute;
 using NzCovidPass.Core;
+using NzCovidPass.Core.Models;
 using NzCovidPass.Core.Tokens;
 using Xunit;
 
@@ -21,13 +20,7 @@ public class PassVerifierTests
     public PassVerifierTests()
     {
         var logger = new NullLogger<PassVerifier>();
-        var optionsAccessor = Options.Create(new PassVerifierOptions()
-        {
-            Prefix = PassVerifierOptions.Defaults.Prefix,
-            Version = PassVerifierOptions.Defaults.Version,
-            ValidIssuers = PassVerifierOptions.Defaults.ValidIssuers.ToHashSet(),
-            ValidAlgorithms = PassVerifierOptions.Defaults.ValidAlgorithms.ToHashSet()
-        });
+        var optionsAccessor = Options.Create(new PassVerifierOptions());
         var tokenReader = Substitute.For<ICwtSecurityTokenReader>();
         var tokenValidator = Substitute.For<ICwtSecurityTokenValidator>();
 
@@ -59,7 +52,7 @@ public class PassVerifierTests
 
         AssertFailedResult(result);
 
-        Assert.Contains(PassVerifierContext.PrefixValidationFailed(requiredPrefix: "NZCP:"), result.FailureReasons);
+        Assert.Contains(PassVerifierContext.PrefixValidationFailed(validPrefix: "NZCP:"), result.FailureReasons);
     }
 
     [Theory]
@@ -72,7 +65,7 @@ public class PassVerifierTests
 
         AssertFailedResult(result);
 
-        Assert.Contains(PassVerifierContext.VersionValidationFailed(requiredVersion: 1), result.FailureReasons);
+        Assert.Contains(PassVerifierContext.VersionValidationFailed(validVersion: 1), result.FailureReasons);
     }
 
     [Theory]
@@ -186,30 +179,23 @@ public class PassVerifierTests
         Assert.Empty(result.FailureReasons);
     }
 
-    private static CwtSecurityToken CreateToken()
-    {
-        var credentialSubject = new CborObject(new Dictionary<CborValue, CborValue>()
-        {
-            { "givenName", "John Andrew" },
-            { "familyName", "Doe" },
-            { "dob", "1979-04-14" },
-        });
-        var verifiableCredential = new CborObject(new Dictionary<CborValue, CborValue>()
-        {
-            { "version", "1.0.0" },
-            { "context", new CborArray("https://www.w3.org/2018/credentials/v1", "https://nzcp.covid19.health.nz/contexts/v1") },
-            { "type", new CborArray("VerifiableCredential", "PublicCovidPass") },
-            { "credentialSubject", credentialSubject }
-        });
-
-        return new CwtSecurityToken(
-            new CwtSecurityToken.Header(new CborObject(), ReadOnlyMemory<byte>.Empty),
-            new CwtSecurityToken.Payload(
-                new CborObject(new Dictionary<CborValue, CborValue>()
-                {
-                    { "vc", verifiableCredential }
-                }),
-                ReadOnlyMemory<byte>.Empty),
-            new CwtSecurityToken.Signature(ReadOnlyMemory<byte>.Empty));
-    }
+    private static CwtSecurityToken CreateToken() =>
+        CwtSecurityTokenBuilder
+            .New
+            .WithKeyId("key-1")
+            .WithAlgorithm(SecurityAlgorithms.EcdsaSha256)
+            .WithCti(Guid.NewGuid())
+            .WithIssuer("did:web:nzcp.identity.health.nz")
+            .WithExpiry(DateTimeOffset.Now.AddMonths(6))
+            .WithNotBefore(DateTimeOffset.Now.AddMonths(-1))
+            .WithPublicCovidPassCredential(new VerifiableCredential<PublicCovidPass>(
+                version: "1.0.0",
+                context: new string[] { "https://www.w3.org/2018/credentials/v1", "https://nzcp.covid19.health.nz/contexts/v1" },
+                type: new string[] { "VerifiableCredential", "PublicCovidPass" },
+                credentialSubject: new PublicCovidPass(
+                    givenName: "John Andrew",
+                    familyName: "Doe",
+                    dateOfBirth: new DateTimeOffset(new DateTime(1979, 4, 14))
+                )))
+            .Build();
 }

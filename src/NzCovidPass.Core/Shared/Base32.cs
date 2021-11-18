@@ -4,9 +4,9 @@ namespace NzCovidPass.Core.Shared
     /// Helpers for base-32 encoded data.
     /// </summary>
     /// <remarks>
-    /// Taken from <see href="https://stackoverflow.com/a/7135008" />
+    /// Based on <see href="https://stackoverflow.com/a/7135008" />
     /// </remarks>
-    internal class Base32
+    internal static class Base32
     {
         private const string Symbols = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
         private const int BitsPerSymbol = 5;

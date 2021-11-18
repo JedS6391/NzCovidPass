@@ -2,8 +2,11 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.IdentityModel.Tokens;
 using NzCovidPass.Core;
+using NzCovidPass.Core.Models;
 using NzCovidPass.Core.Shared;
+using NzCovidPass.Core.Tokens;
 using Xunit;
 
 namespace NzCovidPass.Test.Integration;
@@ -20,22 +23,19 @@ public class PassVerifierTests
     [Fact]
     public async Task VerifyAsync_ValidPass_ReturnsSuccessResult()
     {
-        // Arrange
         var verifier = GetVerifier();
 
-        // Act
         var result = await verifier.VerifyAsync(SampleCovidPass.Valid);
 
-        // Assert
         Assert.NotNull(result);
         Assert.True(result.HasSucceeded);
         Assert.False(result.HasFailed);
         Assert.NotNull(result.Token);
         Assert.NotNull(result.Pass);
-        Assert.Equal("Jack", result.Pass.GivenName);
-        Assert.Equal("Sparrow", result.Pass.FamilyName);
-        Assert.Equal(new DateTime(year: 1960, month: 4, day: 16), result.Pass.DateOfBirth);
         Assert.Empty(result.FailureReasons);
+
+        ValidateToken(result.Token);
+        ValidatePass(result.Pass);
     }
 
     [Theory]
@@ -48,19 +48,51 @@ public class PassVerifierTests
     [InlineData(SampleCovidPass.InvalidBase32Payload)]
     public async Task VerifyAsync_InvalidPass_ReturnsFailResult(string passPayload)
     {
-        // Arrange
         var verifier = GetVerifier();
 
-        // Act
         var result = await verifier.VerifyAsync(passPayload);
 
-        // Assert
         Assert.NotNull(result);
         Assert.False(result.HasSucceeded);
         Assert.True(result.HasFailed);
         Assert.Throws<InvalidOperationException>(() => result.Token);
         Assert.Throws<InvalidOperationException>(() => result.Pass);
         Assert.NotEmpty(result.FailureReasons);
+    }
+
+    private static void ValidateToken(CwtSecurityToken token)
+    {
+        // Header
+        Assert.Equal("key-1", token.KeyId);
+        Assert.Equal(SecurityAlgorithms.EcdsaSha256, token.Algorithm);
+
+        // Payload
+        // Note that the GUIDs here don't exactly line up with the spec, as .NET may reverse the byte order: https://stackoverflow.com/a/9195681
+        Assert.Equal("urn:uuid:4df5a460-304e-3243-be33-ad78b1eafa4b", token.Jti);
+        Assert.Equal(new Guid("4df5a460-304e-3243-be33-ad78b1eafa4b"), token.Cti);
+        Assert.Equal("did:web:nzcp.covid19.health.nz", token.Issuer);
+        Assert.Equal(DateTimeOffset.FromUnixTimeSeconds(1635883530), token.NotBefore);
+        Assert.Equal(DateTimeOffset.FromUnixTimeSeconds(1951416330), token.Expiry);
+
+        // Signature + key
+        Assert.NotNull(token.SigningKey);
+        Assert.IsType<JsonWebKey>(token.SigningKey);
+
+        var jsonWebKey = token.SigningKey as JsonWebKey;
+
+        Assert.NotNull(jsonWebKey);
+        Assert.Equal("EC", jsonWebKey.Kty);
+        Assert.Equal("P-256", jsonWebKey.Crv);
+        Assert.Equal("zRR-XGsCp12Vvbgui4DD6O6cqmhfPuXMhi1OxPl8760", jsonWebKey.X);
+        Assert.Equal("Iv5SU6FuW-TRYh5_GOrJlcV_gpF_GpFQhCOD8LSk3T0", jsonWebKey.Y);
+    }
+
+    private static void ValidatePass(PublicCovidPass pass)
+    {
+        // Details expected in SampleCovidPass.Valid.
+        Assert.Equal("Jack", pass.GivenName);
+        Assert.Equal("Sparrow", pass.FamilyName);
+        Assert.Equal(new DateTime(year: 1960, month: 4, day: 16), pass.DateOfBirth);
     }
 
     private PassVerifier GetVerifier() => _serviceProvider.GetRequiredService<PassVerifier>();
