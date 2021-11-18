@@ -18,7 +18,7 @@ namespace NzCovidPass.Test.Unit;
 
 public class CwtSecurityTokenValidatorTests
 {
-    private static readonly Random Random = new Random();
+    private static readonly Random s_random = new Random();
 
     private readonly CwtSecurityTokenValidator _tokenValidator;
     private readonly PassVerifierOptions _verifierOptions;
@@ -303,7 +303,7 @@ public class CwtSecurityTokenValidatorTests
                 var (key, signature) = ComputeSignature(header, payload);
 
                 // Modify the computed signature so it is no longer valid
-                signature[Random.Next(signature.Length)] = (byte) Random.Next();
+                signature[s_random.Next(signature.Length)] = (byte) s_random.Next();
 
                 signingKey = key;
 
