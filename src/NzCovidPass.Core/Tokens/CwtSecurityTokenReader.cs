@@ -36,18 +36,18 @@ namespace NzCovidPass.Core.Tokens
 
                 if (!TryReadCoseStructure(decodedPayloadBytes, out var decodedCoseStructure) || decodedCoseStructure is null)
                 {
-                    // TODO: Logging
+                    _logger.LogError("Unable to read COSE structure");
 
                     context.Fail(CwtSecurityTokenReaderContext.FailedToDecodeCborStructure);
 
                     return;
                 }
 
-                _logger.LogDebug("Decoded COSE structure: {Structure}", decodedCoseStructure);
+                _logger.LogDebug("Decoded COSE structure '{Structure}'", decodedCoseStructure);
 
                 if (!IsValidCoseSingleSignerStructure(decodedCoseStructure))
                 {
-                    _logger.LogError("Payload is not a valid COSE_Sign1 structure.");
+                    _logger.LogError("Payload is not a valid COSE_Sign1 structure");
 
                     context.Fail(CwtSecurityTokenReaderContext.InvalidCoseStructure);
 
@@ -62,16 +62,18 @@ namespace NzCovidPass.Core.Tokens
 
                 if (!TryReadHeaderData(headerByteString!, out var headerData) || headerData is null)
                 {
-                    // TODO: Failure reason and logging
-                    context.Fail();
+                    _logger.LogError("Unable to read CWT header data");
+
+                    context.Fail(CwtSecurityTokenReaderContext.FailedToDecodeCborStructure);
 
                     return;
                 }
 
                 if (!TryReadPayloadData(payloadByteString!, out var payloadData) || payloadData is null)
                 {
-                    // TODO: Failure reason and logging
-                    context.Fail();
+                    _logger.LogError("Unable to read CWT payload data");
+
+                    context.Fail(CwtSecurityTokenReaderContext.FailedToDecodeCborStructure);
 
                     return;
                 }
@@ -85,7 +87,7 @@ namespace NzCovidPass.Core.Tokens
             }
             catch (FormatException formatException)
             {
-                _logger.LogError(formatException, "Failed to decode base-32 payload.");
+                _logger.LogError(formatException, "Failed to decode base-32 payload");
 
                 context.Fail(CwtSecurityTokenReaderContext.InvalidBase32Payload);
             }
@@ -103,7 +105,7 @@ namespace NzCovidPass.Core.Tokens
 
             if (!IsCoseSingleSignerDataObject(cborReader))
             {
-                _logger.LogError("Unable to read payload as COSE single signer structure.");
+                _logger.LogError("Unable to read payload as COSE single signer structure");
 
                 coseStructure = null;
 
@@ -112,7 +114,7 @@ namespace NzCovidPass.Core.Tokens
 
             if (!cborReader.TryReadArray(out coseStructure) || coseStructure is null)
             {
-                _logger.LogError("Unable to read payload as CBOR array type.");
+                _logger.LogError("Unable to read payload as CBOR array type");
 
                 coseStructure = null;
 
