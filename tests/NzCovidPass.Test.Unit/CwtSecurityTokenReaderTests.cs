@@ -61,10 +61,10 @@ public class CwtSecurityTokenReaderTests
     }
 
     [Theory]
-    [InlineData("2KCKAQQSGRBBENCCCI2A====")] // base32(cbor_encode([{}, h'1234', h'1234', h'1234'])) - first component not a byte string
-    [InlineData("2KCEEERUIIJDIQQSGRBBENA=")] // base32(cbor_encode([h'1234', h'1234', h'1234', h'1234'])) - second component not an object
-    [InlineData("QRBBENFAUBBBENA=")] // base32(cbor_encode([h'1234', {}, {}, h'1234'])) - third component component not a byte string
-    [InlineData("QRBBENFAIIJDJIA=")] // base32(cbor_encode([h'1234', {}, h'1234', {}])) - fourth component component not a byte string
+    [InlineData("2KCKAQQSGRBBENCCCI2A====")] // base32(cbor_encode(18([{}, h'1234', h'1234', h'1234']))) - first component not a byte string
+    [InlineData("2KCEEERUIIJDIQQSGRBBENA=")] // base32(cbor_encode(18([h'1234', h'1234', h'1234', h'1234']))) - second component not an object
+    [InlineData("2KCEEERUUCQEEERU")] // base32(cbor_encode(18([h'1234', {}, {}, h'1234']))) - third component component not a byte string
+    [InlineData("2KCEEERUUBBBENFA")] // base32(cbor_encode(18([h'1234', {}, h'1234', {}]))) - fourth component component not a byte string
     public void ReadToken_InvalidCoseStructureComponentType_ReturnsFailResult(string payload)
     {
         var context = new CwtSecurityTokenReaderContext(payload);
