@@ -60,7 +60,7 @@ namespace NzCovidPass.Core.Tokens
                 var payloadByteString = decodedCoseStructure[2] as CborByteString;
                 var signatureByteString = decodedCoseStructure[3] as CborByteString;
 
-                if (!TryReadHeaderData(headerByteString!, out var headerData) || headerData is null)
+                if (!TryReadData(headerByteString!, out var headerData) || headerData is null)
                 {
                     _logger.LogError("Unable to read CWT header data");
 
@@ -69,7 +69,7 @@ namespace NzCovidPass.Core.Tokens
                     return;
                 }
 
-                if (!TryReadPayloadData(payloadByteString!, out var payloadData) || payloadData is null)
+                if (!TryReadData(payloadByteString!, out var payloadData) || payloadData is null)
                 {
                     _logger.LogError("Unable to read CWT payload data");
 
@@ -124,34 +124,18 @@ namespace NzCovidPass.Core.Tokens
             return true;
         }
 
-        private static bool TryReadHeaderData(CborByteString headerByteString, out IReadOnlyDictionary<object, object>? headerData)
+        private static bool TryReadData(CborByteString byteString, out IReadOnlyDictionary<object, object>? data)
         {
-            var cborReader = new CborReader(headerByteString.Value);
+            var cborReader = new CborReader(byteString.Value);
 
-            if (!cborReader.TryReadMap(out var headerCborMap) || headerCborMap is null)
+            if (!cborReader.TryReadMap(out var cborMap) || cborMap is null)
             {
-                headerData = null;
+                data = null;
 
                 return false;
             }
 
-            headerData = headerCborMap.ToGenericDictionary();
-
-            return true;
-        }
-
-        private static bool TryReadPayloadData(CborByteString payloadByteString, out IReadOnlyDictionary<object, object>? payloadData)
-        {
-            var cborReader = new CborReader(payloadByteString.Value);
-
-            if (!cborReader.TryReadMap(out var payloadCborMap) || payloadCborMap is null)
-            {
-                payloadData = null;
-
-                return false;
-            }
-
-            payloadData = payloadCborMap.ToGenericDictionary();
+            data = cborMap.ToGenericDictionary();
 
             return true;
         }
