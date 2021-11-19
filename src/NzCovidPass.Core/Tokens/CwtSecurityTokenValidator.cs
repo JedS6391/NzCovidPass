@@ -1,10 +1,10 @@
-using System.Buffers;
-using Dahomey.Cbor.Serialization;
+using System.Formats.Cbor;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using NzCovidPass.Core.Models;
 using NzCovidPass.Core.Shared;
+using NzCovidPass.Core.Shared.Cbor;
 using NzCovidPass.Core.Verification;
 
 namespace NzCovidPass.Core.Tokens
@@ -268,8 +268,7 @@ namespace NzCovidPass.Core.Tokens
         {
             // https://datatracker.ietf.org/doc/html/rfc8152#section-4.4
             // Note this process assumes a COSE_Sign1 structure, which NZ Covid passes should be.
-            var b = new ArrayBufferWriter<byte>();
-            var w = new CborWriter(b);
+            var cborWriter = new CborWriter();
 
             var signatureStructure = new object[]
             {
@@ -283,9 +282,9 @@ namespace NzCovidPass.Core.Tokens
                 token.PayloadBytes
             };
 
-            w.WriteArray(signatureStructure);
+            cborWriter.WriteArray(signatureStructure);
 
-            return b.WrittenMemory.ToArray();
+            return cborWriter.Encode();
         }
     }
 }

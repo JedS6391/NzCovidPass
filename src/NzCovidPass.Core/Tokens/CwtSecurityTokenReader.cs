@@ -1,7 +1,7 @@
-using Dahomey.Cbor;
-using Dahomey.Cbor.ObjectModel;
+using System.Formats.Cbor;
 using Microsoft.Extensions.Logging;
 using NzCovidPass.Core.Shared;
+using NzCovidPass.Core.Shared.Cbor;
 
 namespace NzCovidPass.Core.Tokens
 {
@@ -34,11 +34,18 @@ namespace NzCovidPass.Core.Tokens
 
                 _logger.LogDebug("Decoded base-32 payload bytes (hex) '{Payload}'", Convert.ToHexString(decodedPayloadBytes));
 
-                var decodedCoseStructure = Cbor.Deserialize<CborArray>(decodedPayloadBytes);
+                if (!TryReadCoseStructure(decodedPayloadBytes, out var decodedCoseStructure) || decodedCoseStructure is null)
+                {
+                    // TODO: Logging
+
+                    context.Fail(CwtSecurityTokenReaderContext.FailedToDecodeCborStructure);
+
+                    return;
+                }
 
                 _logger.LogDebug("Decoded COSE structure: {Structure}", decodedCoseStructure);
 
-                if (!IsValidCoseStructure(decodedCoseStructure))
+                if (!IsValidCoseSingleSignerStructure(decodedCoseStructure))
                 {
                     _logger.LogError("Payload is not a valid COSE_Sign1 structure.");
 
@@ -47,17 +54,32 @@ namespace NzCovidPass.Core.Tokens
                     return;
                 }
 
-                var rawHeaderBytes = decodedCoseStructure[0].GetValueBytes();
-                var rawPayloadBytes = decodedCoseStructure[2].GetValueBytes();
-                var rawSignatureBytes = decodedCoseStructure[3].GetValueBytes();
+                // By this point, we've validated the COSE structure so we can safely extract
+                // the structure components to their respective types.
+                var headerByteString = decodedCoseStructure[0] as CborByteString;
+                var payloadByteString = decodedCoseStructure[2] as CborByteString;
+                var signatureByteString = decodedCoseStructure[3] as CborByteString;
 
-                var header = Cbor.Deserialize<CborObject>(rawHeaderBytes.Span);
-                var payload = Cbor.Deserialize<CborObject>(rawPayloadBytes.Span);
+                if (!TryReadHeaderData(headerByteString!, out var headerData) || headerData is null)
+                {
+                    // TODO: Failure reason and logging
+                    context.Fail();
+
+                    return;
+                }
+
+                if (!TryReadPayloadData(payloadByteString!, out var payloadData) || payloadData is null)
+                {
+                    // TODO: Failure reason and logging
+                    context.Fail();
+
+                    return;
+                }
 
                 var token = new CwtSecurityToken(
-                    new CwtSecurityToken.Header(header, rawHeaderBytes),
-                    new CwtSecurityToken.Payload(payload, rawPayloadBytes),
-                    new CwtSecurityToken.Signature(rawSignatureBytes));
+                    new CwtSecurityToken.Header(headerData, headerByteString!.Value),
+                    new CwtSecurityToken.Payload(payloadData, payloadByteString!.Value),
+                    new CwtSecurityToken.Signature(signatureByteString!.Value));
 
                 context.Succeed(token);
             }
@@ -67,12 +89,69 @@ namespace NzCovidPass.Core.Tokens
 
                 context.Fail(CwtSecurityTokenReaderContext.InvalidBase32Payload);
             }
-            catch (CborException cborException)
+            catch (CborContentException cborContentException)
             {
-                _logger.LogError(cborException, "Failed to decode CBOR structure");
+                _logger.LogError(cborContentException, "Failed to decode CBOR structure");
 
                 context.Fail(CwtSecurityTokenReaderContext.FailedToDecodeCborStructure);
             }
+        }
+
+        private bool TryReadCoseStructure(byte[] decodedPayloadBytes, out CborArray? coseStructure)
+        {
+            var cborReader = new CborReader(decodedPayloadBytes);
+
+            if (!IsCoseSingleSignerDataObject(cborReader))
+            {
+                _logger.LogError("Unable to read payload as COSE single signer structure.");
+
+                coseStructure = null;
+
+                return false;
+            }
+
+            if (!cborReader.TryReadArray(out coseStructure) || coseStructure is null)
+            {
+                _logger.LogError("Unable to read payload as CBOR array type.");
+
+                coseStructure = null;
+
+                return false;
+            }
+
+            return true;
+        }
+
+        private static bool TryReadHeaderData(CborByteString headerByteString, out IReadOnlyDictionary<object, object>? headerData)
+        {
+            var cborReader = new CborReader(headerByteString.Value);
+
+            if (!cborReader.TryReadMap(out var headerCborMap) || headerCborMap is null)
+            {
+                headerData = null;
+
+                return false;
+            }
+
+            headerData = headerCborMap.ToGenericDictionary();
+
+            return true;
+        }
+
+        private static bool TryReadPayloadData(CborByteString payloadByteString, out IReadOnlyDictionary<object, object>? payloadData)
+        {
+            var cborReader = new CborReader(payloadByteString.Value);
+
+            if (!cborReader.TryReadMap(out var payloadCborMap) || payloadCborMap is null)
+            {
+                payloadData = null;
+
+                return false;
+            }
+
+            payloadData = payloadCborMap.ToGenericDictionary();
+
+            return true;
         }
 
         private static string AddBase32Padding(string base32Payload)
@@ -87,7 +166,24 @@ namespace NzCovidPass.Core.Tokens
             return base32Payload;
         }
 
-        private bool IsValidCoseStructure(CborArray coseStructure)
+        private static bool IsCoseSingleSignerDataObject(CborReader reader)
+        {
+            // https://www.iana.org/assignments/cbor-tags/cbor-tags.xhtml
+            const CborTag CoseSingleSignerTag = (CborTag) 18;
+
+            var state = reader.PeekState();
+
+            if (state != CborReaderState.Tag)
+            {
+                return false;
+            }
+
+            var tag = reader.ReadTag();
+
+            return tag == CoseSingleSignerTag;
+        }
+
+        private bool IsValidCoseSingleSignerStructure(CborArray coseStructure)
         {
             // https://datatracker.ietf.org/doc/html/rfc8152
             // Note this process assumes a COSE_Sign1 structure, which NZ Covid passes should be.
@@ -102,7 +198,7 @@ namespace NzCovidPass.Core.Tokens
 
             // We expect the structure to have the following types of CBOR values [ bytestring, map, bytestring, bytestring ]
             if (coseStructure[0].Type != CborValueType.ByteString ||
-                coseStructure[1].Type != CborValueType.Object ||
+                coseStructure[1].Type != CborValueType.Map ||
                 coseStructure[2].Type != CborValueType.ByteString ||
                 coseStructure[3].Type != CborValueType.ByteString)
             {
