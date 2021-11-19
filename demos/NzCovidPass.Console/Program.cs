@@ -1,14 +1,36 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using CommandLine;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using NzCovidPass.Console;
 using NzCovidPass.Core;
 using NzCovidPass.Core.Shared;
 
-const string CovidPassValid = "NZCP:/1/2KCEVIQEIVVWK6JNGEASNICZAEP2KALYDZSGSZB2O5SWEOTOPJRXALTDN53GSZBRHEXGQZLBNR2GQLTOPICRUYMBTIFAIGTUKBAAUYTWMOSGQQDDN5XHIZLYOSBHQJTIOR2HA4Z2F4XXO53XFZ3TGLTPOJTS6MRQGE4C6Y3SMVSGK3TUNFQWY4ZPOYYXQKTIOR2HA4Z2F4XW46TDOAXGG33WNFSDCOJONBSWC3DUNAXG46RPMNXW45DFPB2HGL3WGFTXMZLSONUW63TFGEXDALRQMR2HS4DFQJ2FMZLSNFTGSYLCNRSUG4TFMRSW45DJMFWG6UDVMJWGSY2DN53GSZCQMFZXG4LDOJSWIZLOORUWC3CTOVRGUZLDOSRWSZ3JOZSW4TTBNVSWISTBMNVWUZTBNVUWY6KOMFWWKZ2TOBQXE4TPO5RWI33CNIYTSNRQFUYDILJRGYDVAYFE6VGU4MCDGK7DHLLYWHVPUS2YIDJOA6Y524TD3AZRM263WTY2BE4DPKIF27WKF3UDNNVSVWRDYIYVJ65IRJJJ6Z25M2DO4YZLBHWFQGVQR5ZLIWEQJOZTS3IQ7JTNCFDX";
+await Parser
+    .Default
+    .ParseArguments<Options>(args)
+    .WithNotParsed(errors => Console.WriteLine($"Failed to parse options."))
+    .WithParsedAsync(async options =>
+    {
+        var host = BuildHost(args, options.Verbose);
 
-var host = Host
+        var verifier = host.Services.GetRequiredService<PassVerifier>();
+
+        var result = await verifier.VerifyAsync(options.Pass);
+
+        if (result.HasSucceeded)
+        {
+            Console.WriteLine($"NZ COVID Pass subject details: {result.Pass.FamilyName}, {result.Pass.GivenName} - {result.Pass.DateOfBirth}");
+        }
+        else
+        {
+            Console.WriteLine($"Verification failed: {string.Join(", ", result.FailureReasons.Select(fr => fr.Code))}");
+        }
+    });
+
+static IHost BuildHost(string[] args, bool verbose) => Host
     .CreateDefaultBuilder(args)
-    .ConfigureLogging(logging => logging.SetMinimumLevel(LogLevel.Debug))
+    .ConfigureLogging(logging => logging.SetMinimumLevel(verbose ? LogLevel.Trace : LogLevel.Information))
     .ConfigureServices((_, services) =>
     {
         services.AddMemoryCache();
@@ -30,15 +52,3 @@ var host = Host
     })
     .Build();
 
-var verifier = host.Services.GetRequiredService<PassVerifier>();
-
-var result = await verifier.VerifyAsync(CovidPassValid);
-
-if (result.HasSucceeded)
-{
-    Console.WriteLine($"NZ COVID Pass subject details: {result.Pass.FamilyName}, {result.Pass.GivenName} - {result.Pass.DateOfBirth}");
-}
-else
-{
-    Console.WriteLine($"Verification failed: {string.Join(", ", result.FailureReasons.Select(fr => fr.Code))}");
-}
