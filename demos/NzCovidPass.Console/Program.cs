@@ -16,11 +16,11 @@ await Parser
 
         var verifier = host.Services.GetRequiredService<PassVerifier>();
 
-        var result = await verifier.VerifyAsync(options.Pass);
+        var result = await verifier.VerifyAsync(options.Pass!);
 
         if (result.HasSucceeded)
         {
-            Console.WriteLine($"NZ COVID Pass subject details: {result.Pass.FamilyName}, {result.Pass.GivenName} - {result.Pass.DateOfBirth}");
+            Console.WriteLine($"NZ COVID Pass subject details: {result.Pass!.FamilyName}, {result.Pass!.GivenName} - {result.Pass!.DateOfBirth}");
         }
         else
         {

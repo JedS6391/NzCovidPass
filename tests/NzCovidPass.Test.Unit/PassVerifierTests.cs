@@ -91,7 +91,7 @@ public class PassVerifierTests
             {
                 var context = ci[0] as CwtSecurityTokenReaderContext;
 
-                context.Fail();
+                context!.Fail();
             });
 
         var result = await _passVerifier.VerifyAsync(PassPayload);
@@ -112,7 +112,7 @@ public class PassVerifierTests
             {
                 var context = ci[0] as CwtSecurityTokenReaderContext;
 
-                context.Succeed(CreateToken());
+                context!.Succeed(CreateToken());
             });
 
         _tokenValidator
@@ -121,7 +121,7 @@ public class PassVerifierTests
             {
                 var context = ci[0] as CwtSecurityTokenValidatorContext;
 
-                context.Fail();
+                context!.Fail();
             });
 
         var result = await _passVerifier.VerifyAsync(PassPayload);
@@ -142,7 +142,7 @@ public class PassVerifierTests
             {
                 var context = ci[0] as CwtSecurityTokenReaderContext;
 
-                context.Succeed(CreateToken());
+                context!.Succeed(CreateToken());
             });
 
         _tokenValidator
@@ -151,7 +151,7 @@ public class PassVerifierTests
             {
                 var context = ci[0] as CwtSecurityTokenValidatorContext;
 
-                context.Succeed();
+                context!.Succeed();
             });
 
         var result = await _passVerifier.VerifyAsync(PassPayload);

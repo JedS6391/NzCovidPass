@@ -47,7 +47,7 @@ namespace NzCovidPass.Core.Cbor
             return dictionary;
         }
 
-        private static object? ConvertCborObject(CborObject @object) => @object switch
+        private static object ConvertCborObject(CborObject @object) => @object switch
         {
             CborMap map => map.ToGenericDictionary(),
             CborArray array => array.Values.Select(v => ConvertCborObject(v)),

@@ -230,7 +230,7 @@ public class CwtSecurityTokenValidatorTests
         var context = new CwtSecurityTokenValidatorContext(token);
 
         _verificationKeyProvider
-            .GetKeyAsync(Arg.Is(token.Issuer), Arg.Is(token.KeyId))
+            .GetKeyAsync(Arg.Is(token.Issuer!), Arg.Is(token.KeyId!))
             .Returns(Task.FromException<SecurityKey>(new VerificationKeyNotFoundException("Key not found")));
 
         await _tokenValidator.ValidateTokenAsync(context);
@@ -274,8 +274,8 @@ public class CwtSecurityTokenValidatorTests
         });
 
         _verificationKeyProvider
-            .GetKeyAsync(Arg.Is(token.Issuer), Arg.Is(token.KeyId))
-            .Returns(Task.FromResult(signingKey));
+            .GetKeyAsync(Arg.Is(token.Issuer!), Arg.Is(token.KeyId!))
+            .Returns(Task.FromResult(signingKey!));
 
         await _tokenValidator.ValidateTokenAsync(context);
 
@@ -313,8 +313,8 @@ public class CwtSecurityTokenValidatorTests
         var context = new CwtSecurityTokenValidatorContext(token);
 
         _verificationKeyProvider
-            .GetKeyAsync(Arg.Is(token.Issuer), Arg.Is(token.KeyId))
-            .Returns(Task.FromResult(signingKey));
+            .GetKeyAsync(Arg.Is(token.Issuer!), Arg.Is(token.KeyId!))
+            .Returns(Task.FromResult(signingKey!));
 
         await _tokenValidator.ValidateTokenAsync(context);
 
@@ -349,8 +349,8 @@ public class CwtSecurityTokenValidatorTests
         var context = new CwtSecurityTokenValidatorContext(token);
 
         _verificationKeyProvider
-            .GetKeyAsync(Arg.Is(token.Issuer), Arg.Is(token.KeyId))
-            .Returns(Task.FromResult(signingKey));
+            .GetKeyAsync(Arg.Is(token.Issuer!), Arg.Is(token.KeyId!))
+            .Returns(Task.FromResult(signingKey!));
 
         await _tokenValidator.ValidateTokenAsync(context);
 
@@ -400,8 +400,8 @@ public class CwtSecurityTokenValidatorTests
         var context = new CwtSecurityTokenValidatorContext(token);
 
         _verificationKeyProvider
-            .GetKeyAsync(Arg.Is(token.Issuer), Arg.Is(token.KeyId))
-            .Returns(Task.FromResult(signingKey));
+            .GetKeyAsync(Arg.Is(token.Issuer!), Arg.Is(token.KeyId!))
+            .Returns(Task.FromResult(signingKey!));
 
         await _tokenValidator.ValidateTokenAsync(context);
 
@@ -453,8 +453,8 @@ public class CwtSecurityTokenValidatorTests
         var context = new CwtSecurityTokenValidatorContext(token);
 
         _verificationKeyProvider
-            .GetKeyAsync(Arg.Is(token.Issuer), Arg.Is(token.KeyId))
-            .Returns(Task.FromResult(signingKey));
+            .GetKeyAsync(Arg.Is(token.Issuer!), Arg.Is(token.KeyId!))
+            .Returns(Task.FromResult(signingKey!));
 
         await _tokenValidator.ValidateTokenAsync(context);
 
@@ -500,8 +500,8 @@ public class CwtSecurityTokenValidatorTests
         var context = new CwtSecurityTokenValidatorContext(token);
 
         _verificationKeyProvider
-            .GetKeyAsync(Arg.Is(token.Issuer), Arg.Is(token.KeyId))
-            .Returns(Task.FromResult(signingKey));
+            .GetKeyAsync(Arg.Is(token.Issuer!), Arg.Is(token.KeyId!))
+            .Returns(Task.FromResult(signingKey!));
 
         await _tokenValidator.ValidateTokenAsync(context);
 

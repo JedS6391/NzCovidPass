@@ -50,7 +50,7 @@ namespace NzCovidPass.Function
             return response;
         }
 
-        private static async Task<VerifyPassRequest?> DeserializeRequestAsync(HttpRequestData request)
+        private static async Task<VerifyPassRequest> DeserializeRequestAsync(HttpRequestData request)
         {
             if (request.Body is null)
             {
