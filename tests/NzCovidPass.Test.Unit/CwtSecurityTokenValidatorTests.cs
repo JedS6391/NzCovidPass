@@ -465,7 +465,7 @@ public class CwtSecurityTokenValidatorTests
             context.FailureReasons);
     }
 
-   [Fact]
+    [Fact]
     public async Task ValidateTokenAsync_AllValidationsPass_ReturnsSuccessResult()
     {
         SecurityKey? signingKey = null;
