@@ -4,10 +4,8 @@ namespace NzCovidPass.Core.Cbor
     {
         Map,
         Array,
-        Boolean,
         Integer,
         TextString,
-        ByteString,
-        Null
+        ByteString
     }
 }

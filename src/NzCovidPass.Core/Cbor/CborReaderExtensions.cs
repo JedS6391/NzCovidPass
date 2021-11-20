@@ -11,16 +11,15 @@ namespace NzCovidPass.Core.Cbor
         {
             var state = reader.PeekState();
 
+            // Currently only supporting what is needed for this library.
             return state switch
             {
                 CborReaderState.StartMap => reader.ReadMap(),
                 CborReaderState.StartArray => reader.ReadArray(),
                 CborReaderState.TextString => new CborTextString(reader.ReadTextString()),
-                CborReaderState.Boolean => new CborBoolean(reader.ReadBoolean()),
                 CborReaderState.ByteString => new CborByteString(reader.ReadByteString()),
                 CborReaderState.UnsignedInteger => new CborInteger(reader.ReadInt32()),
                 CborReaderState.NegativeInteger => new CborInteger(reader.ReadInt32()),
-                CborReaderState.Null => reader.ReadNullValue(),
                 _ => throw new NotSupportedException($"Unexpected reader state '{state}'.")
             };
         }
@@ -62,13 +61,6 @@ namespace NzCovidPass.Core.Cbor
             reader.ReadEndMap();
 
             return new CborMap(values);
-        }
-
-        public static CborNull ReadNullValue(this CborReader reader)
-        {
-            reader.ReadNull();
-
-            return CborNull.Value;
         }
 
         public static bool TryReadArray(this CborReader reader, out CborArray? array)

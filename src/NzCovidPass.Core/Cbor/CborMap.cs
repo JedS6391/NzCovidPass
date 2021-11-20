@@ -3,45 +3,24 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace NzCovidPass.Core.Cbor
 {
-    internal sealed class CborMap : CborObject, IReadOnlyDictionary<CborObject, CborObject>
+    internal sealed class CborMap : CborObject
     {
-        private readonly IDictionary<CborObject, CborObject> _values;
-
-        public CborMap()
-        {
-            _values = new Dictionary<CborObject, CborObject>();
-        }
-
         public CborMap(IDictionary<CborObject, CborObject> values)
         {
-            _values = values;
+            Values = values;
         }
 
         public override CborValueType Type => CborValueType.Map;
 
-        public CborObject this[CborObject key] => _values[key];
+        public IDictionary<CborObject, CborObject> Values { get; }
 
-        public IEnumerable<CborObject> Keys => _values.Keys;
-
-        public IEnumerable<CborObject> Values => _values.Values;
-
-        public int Count => _values.Count;
-
-        public bool ContainsKey(CborObject key) => _values.ContainsKey(key);
-
-        public IEnumerator<KeyValuePair<CborObject, CborObject>> GetEnumerator() =>
-            _values.GetEnumerator();
-
-        public bool TryGetValue(CborObject key, [MaybeNullWhen(false)] out CborObject value) =>
-            _values.TryGetValue(key, out value);
-
-        IEnumerator IEnumerable.GetEnumerator() => _values.GetEnumerator();
+        public int Count => Values.Count;
 
         public IReadOnlyDictionary<object, object> ToGenericDictionary()
         {
-            var dictionary = new Dictionary<object, object>(_values.Count);
+            var dictionary = new Dictionary<object, object>(Values.Count);
 
-            foreach (var item in _values)
+            foreach (var item in Values)
             {
                 var k = ConvertCborObject(item.Key);
                 var v = ConvertCborObject(item.Value);
@@ -55,12 +34,10 @@ namespace NzCovidPass.Core.Cbor
         private static object? ConvertCborObject(CborObject @object) => @object switch
         {
             CborMap map => map.ToGenericDictionary(),
-            CborArray array => array.Select(v => ConvertCborObject(v)),
+            CborArray array => array.Values.Select(v => ConvertCborObject(v)),
             CborByteString byteString => byteString.Value,
             CborTextString textString => textString.Value,
             CborInteger integer => integer.Value,
-            CborBoolean boolean => boolean.Value,
-            CborNull _ => null,
             _ => throw new NotSupportedException($"Unexpected CBOR object type '{@object.GetType().FullName}'.")
         };
     }

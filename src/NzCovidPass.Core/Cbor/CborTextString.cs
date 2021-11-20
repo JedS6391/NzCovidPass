@@ -9,7 +9,5 @@ namespace NzCovidPass.Core.Cbor
 
         public override CborValueType Type => CborValueType.TextString;
         public string Value { get; }
-
-        public override string ToString() => Value;
     }
 }
