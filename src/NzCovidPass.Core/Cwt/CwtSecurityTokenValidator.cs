@@ -282,7 +282,7 @@ namespace NzCovidPass.Core.Cwt
                 token.PayloadBytes
             };
 
-            cborWriter.WriteArray(signatureStructure);
+            cborWriter.WriteCollection(signatureStructure);
 
             return cborWriter.Encode();
         }

@@ -7,11 +7,16 @@ namespace NzCovidPass.Core.Cbor
     /// </summary>
     internal static class CborWriterExtensions
     {
-        public static void WriteArray(this CborWriter writer, object[] array)
+        /// <summary>
+        /// Writes <paramref name="collection" /> to the provided <see cref="CborWriter" />.
+        /// </summary>
+        /// <param name="writer">The <see cref="CborWriter" /> to write to.</param>
+        /// <param name="collection">The collection to write.</param>
+        public static void WriteCollection(this CborWriter writer, IReadOnlyCollection<object> collection)
         {
-            writer.WriteStartArray(array.Length);
+            writer.WriteStartArray(collection.Count);
 
-            foreach (var item in array)
+            foreach (var item in collection)
             {
                 switch (item)
                 {

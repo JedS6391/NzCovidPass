@@ -7,6 +7,11 @@ namespace NzCovidPass.Core.Cbor
     /// </summary>
     internal static class CborReaderExtensions
     {
+        /// <summary>
+        /// Reads a <see cref="CborObject" /> from the reader.
+        /// </summary>
+        /// <param name="reader">The <see cref="CborReader" /> to read from.</param>
+        /// <returns>The next CBOR encoded object.</returns>
         public static CborObject ReadObject(this CborReader reader)
         {
             var state = reader.PeekState();
@@ -24,6 +29,11 @@ namespace NzCovidPass.Core.Cbor
             };
         }
 
+        /// <summary>
+        /// Reads a <see cref="CborArray" /> from the reader.
+        /// </summary>
+        /// <param name="reader">The <see cref="CborReader" /> to read from.</param>
+        /// <returns>The next CBOR encoded array.</returns>
         public static CborArray ReadArray(this CborReader reader)
         {
             var length = reader.ReadStartArray();
@@ -42,6 +52,11 @@ namespace NzCovidPass.Core.Cbor
             return new CborArray(values);
         }
 
+        /// <summary>
+        /// Reads a <see cref="CborMap" /> from the reader.
+        /// </summary>
+        /// <param name="reader">The <see cref="CborReader" /> to read from.</param>
+        /// <returns>The next CBOR encoded map.</returns>
         public static CborMap ReadMap(this CborReader reader)
         {
             var count = reader.ReadStartMap();
@@ -63,6 +78,12 @@ namespace NzCovidPass.Core.Cbor
             return new CborMap(values);
         }
 
+        /// <summary>
+        /// Attempts to read a <see cref="CborArray" /> from the reader.
+        /// </summary>
+        /// <param name="reader">The <see cref="CborReader" /> to read from.</param>
+        /// <param name="array">The array that was read, if any.</param>
+        /// <returns><see langword="true" /> if an array was read; <see langword="false" /> otherwise.</returns>
         public static bool TryReadArray(this CborReader reader, out CborArray? array)
         {
             var state = reader.PeekState();
@@ -88,6 +109,12 @@ namespace NzCovidPass.Core.Cbor
             }
         }
 
+        /// <summary>
+        /// Attempts to read a <see cref="CborMap" /> from the reader.
+        /// </summary>
+        /// <param name="reader">The <see cref="CborReader" /> to read from.</param>
+        /// <param name="map">The map that was read, if any.</param>
+        /// <returns><see langword="true" /> if a map was read; <see langword="false" /> otherwise.</returns>
         public static bool TryReadMap(this CborReader reader, out CborMap? map)
         {
             var state = reader.PeekState();
