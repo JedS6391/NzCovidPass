@@ -31,10 +31,25 @@ public class CwtSecurityTokenReaderTests
     }
 
     [Fact]
-    public void ReadToken_InvalidMainCborObjectType_ReturnsFailResult()
+    public void ReadToken_MissingCoseSingleSignerTag_ReturnsFailResult()
     {
         // base32(cbor_encode({"test": "1"}))
         const string Payload = "UFSHIZLTORQTE===";
+
+        var context = new CwtSecurityTokenReaderContext(Payload);
+
+        _tokenReader.ReadToken(context);
+
+        AssertFailedResult(context);
+
+        Assert.Contains(CwtSecurityTokenReaderContext.FailedToDecodeCborStructure, context.FailureReasons);
+    }
+
+    [Fact]
+    public void ReadToken_InvalidMainCborObjectType_ReturnsFailResult()
+    {
+        // base32(cbor_encode(18({"test": "1"})))
+        const string Payload = "2KQWI5DFON2GCMI=";
 
         var context = new CwtSecurityTokenReaderContext(Payload);
 
@@ -76,6 +91,37 @@ public class CwtSecurityTokenReaderTests
         Assert.Contains(CwtSecurityTokenReaderContext.InvalidCoseStructure, context.FailureReasons);
     }
 
+    [Fact]
+    public void ReadToken_InvalidHeaderByteString_ReturnsFailResult()
+    {
+        // base32(cbor_encode(18([h'816474657374', {}, h'A0', h'1234'])))
+        // h'816474657374' = ["test"]
+        const string Payload = "2KCENALEORSXG5FAIGQEEERU";
+
+        var context = new CwtSecurityTokenReaderContext(Payload);
+
+        _tokenReader.ReadToken(context);
+
+        AssertFailedResult(context);
+
+        Assert.Contains(CwtSecurityTokenReaderContext.FailedToDecodeCborStructure, context.FailureReasons);
+    }
+
+    [Fact]
+    public void ReadToken_InvalidPayloadByteString_ReturnsFailResult()
+    {
+        // base32(cbor_encode(18([h'A0', {}, h'816474657374', h'1234'])))
+        // h'816474657374' = ["test"]
+        const string Payload = "2KCEDIFAI2AWI5DFON2EEERU";
+
+        var context = new CwtSecurityTokenReaderContext(Payload);
+
+        _tokenReader.ReadToken(context);
+
+        AssertFailedResult(context);
+
+        Assert.Contains(CwtSecurityTokenReaderContext.FailedToDecodeCborStructure, context.FailureReasons);
+    }
     [Fact]
     public void ReadToken_Valid_ReturnsSuccessResult()
     {
