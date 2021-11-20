@@ -1,5 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
-using NzCovidPass.Core.Tokens;
+using NzCovidPass.Core.Cwt;
 using NzCovidPass.Core.Verification;
 
 namespace NzCovidPass.Core.Shared

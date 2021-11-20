@@ -1,6 +1,6 @@
 using System.Collections;
 
-namespace NzCovidPass.Core.Shared.Cbor
+namespace NzCovidPass.Core.Cbor
 {
     internal sealed class CborArray : CborObject, IEnumerable<CborObject>
     {

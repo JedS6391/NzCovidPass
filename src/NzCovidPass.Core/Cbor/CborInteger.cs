@@ -1,4 +1,4 @@
-namespace NzCovidPass.Core.Shared.Cbor
+namespace NzCovidPass.Core.Cbor
 {
     internal sealed class CborInteger : CborObject
     {

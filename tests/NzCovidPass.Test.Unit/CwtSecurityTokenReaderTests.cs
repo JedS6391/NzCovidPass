@@ -1,6 +1,6 @@
 using System;
 using Microsoft.Extensions.Logging.Abstractions;
-using NzCovidPass.Core.Tokens;
+using NzCovidPass.Core.Cwt;
 using Xunit;
 
 namespace NzCovidPass.Test.Unit;

@@ -1,6 +1,6 @@
 using NzCovidPass.Core.Shared;
 
-namespace NzCovidPass.Core.Tokens
+namespace NzCovidPass.Core.Cwt
 {
     /// <summary>
     /// Encapsulates details of the token validation process.

@@ -5,8 +5,8 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using NSubstitute;
 using NzCovidPass.Core;
+using NzCovidPass.Core.Cwt;
 using NzCovidPass.Core.Models;
-using NzCovidPass.Core.Tokens;
 using Xunit;
 
 namespace NzCovidPass.Test.Unit;

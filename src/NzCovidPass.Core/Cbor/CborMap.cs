@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Diagnostics.CodeAnalysis;
 
-namespace NzCovidPass.Core.Shared.Cbor
+namespace NzCovidPass.Core.Cbor
 {
     internal sealed class CborMap : CborObject, IReadOnlyDictionary<CborObject, CborObject>
     {

@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using NzCovidPass.Core.Cwt;
 using NzCovidPass.Core.Shared;
-using NzCovidPass.Core.Tokens;
 
 namespace NzCovidPass.Core
 {

@@ -2,12 +2,12 @@ using System.Formats.Cbor;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using NzCovidPass.Core.Cbor;
 using NzCovidPass.Core.Models;
 using NzCovidPass.Core.Shared;
-using NzCovidPass.Core.Shared.Cbor;
 using NzCovidPass.Core.Verification;
 
-namespace NzCovidPass.Core.Tokens
+namespace NzCovidPass.Core.Cwt
 {
     /// <summary>
     /// An <see cref="ICwtSecurityTokenValidator" /> implementation that applies the validation rules outlined in <see href="https://nzcp.covid19.health.nz/#steps-to-verify-a-new-zealand-covid-pass" />.

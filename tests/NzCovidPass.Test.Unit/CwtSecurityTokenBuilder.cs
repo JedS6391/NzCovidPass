@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
+using NzCovidPass.Core.Cwt;
 using NzCovidPass.Core.Models;
-using NzCovidPass.Core.Tokens;
 
 namespace NzCovidPass.Test.Unit
 {

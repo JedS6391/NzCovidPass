@@ -1,9 +1,9 @@
 using System.Formats.Cbor;
 using Microsoft.Extensions.Logging;
+using NzCovidPass.Core.Cbor;
 using NzCovidPass.Core.Shared;
-using NzCovidPass.Core.Shared.Cbor;
 
-namespace NzCovidPass.Core.Tokens
+namespace NzCovidPass.Core.Cwt
 {
     /// <inheritdoc cref="ICwtSecurityTokenReader" />
     public class CwtSecurityTokenReader : ICwtSecurityTokenReader

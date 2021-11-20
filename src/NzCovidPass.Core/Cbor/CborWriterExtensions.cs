@@ -1,6 +1,6 @@
 using System.Formats.Cbor;
 
-namespace NzCovidPass.Core.Shared.Cbor
+namespace NzCovidPass.Core.Cbor
 {
     /// <summary>
     /// Extension methods for <see cref="CborWriter" />.

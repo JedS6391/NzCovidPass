@@ -4,7 +4,7 @@ using Microsoft.IdentityModel.Tokens;
 using NzCovidPass.Core.Models;
 using NzCovidPass.Core.Shared;
 
-namespace NzCovidPass.Core.Tokens
+namespace NzCovidPass.Core.Cwt
 {
     /// <summary>
     /// A <see cref="SecurityToken" /> designed for representing a CBOR Web Token (CWT).
