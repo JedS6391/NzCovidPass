@@ -1,4 +1,4 @@
-namespace NzCovidPass.Core.Tokens
+namespace NzCovidPass.Core.Cwt
 {
     /// <summary>
     /// Defines the ability to read <see cref="CwtSecurityToken" /> instances.

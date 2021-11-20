@@ -1,11 +1,10 @@
 using System.Text;
 using System.Text.Json;
-using Dahomey.Cbor.ObjectModel;
 using Microsoft.IdentityModel.Tokens;
 using NzCovidPass.Core.Models;
 using NzCovidPass.Core.Shared;
 
-namespace NzCovidPass.Core.Tokens
+namespace NzCovidPass.Core.Cwt
 {
     /// <summary>
     /// A <see cref="SecurityToken" /> designed for representing a CBOR Web Token (CWT).
@@ -130,18 +129,18 @@ namespace NzCovidPass.Core.Tokens
         /// </remarks>
         public class Header
         {
-            private readonly CborObject _cborObject;
-            private readonly ReadOnlyMemory<byte> _rawHeader;
+            private readonly IReadOnlyDictionary<object, object> _claims;
+            private readonly byte[] _headerBytes;
 
             /// <summary>
             /// Initializes a new instance of the <see cref="Header" /> class.
             /// </summary>
-            /// <param name="cborObject">The CBOR object representing the header.</param>
-            /// <param name="rawHeader">The raw bytes of the header.</param>
-            public Header(CborObject cborObject, ReadOnlyMemory<byte> rawHeader)
+            /// <param name="claims">The claims contained in the header.</param>
+            /// <param name="headerBytes">The raw bytes of the header.</param>
+            public Header(IReadOnlyDictionary<object, object> claims, byte[] headerBytes)
             {
-                _cborObject = Requires.NotNull(cborObject);
-                _rawHeader = rawHeader;
+                _claims = Requires.NotNull(claims);
+                _headerBytes = headerBytes;
             }
 
             /// <summary>
@@ -151,16 +150,16 @@ namespace NzCovidPass.Core.Tokens
             {
                 get
                 {
-                    var keyId = ReadRawClaimValue(_cborObject, ClaimIds.Header.KeyId);
+                    var keyId = ReadRawClaimValue(_claims, ClaimIds.Header.KeyId);
 
                     if (keyId is null)
                     {
                         return null;
                     }
 
-                    var keyIdBytes = keyId.GetValueBytes();
+                    var keyIdBytes = keyId as byte[];
 
-                    return Encoding.UTF8.GetString(keyIdBytes.Span);
+                    return Encoding.UTF8.GetString(keyIdBytes!);
                 }
             }
 
@@ -171,7 +170,7 @@ namespace NzCovidPass.Core.Tokens
             {
                 get
                 {
-                    var algorithmId = ReadClaimValue<int>(_cborObject, ClaimIds.Header.Algorithm);
+                    var algorithmId = ReadClaimValue<int>(_claims, ClaimIds.Header.Algorithm);
 
                     if (ClaimIds.Header.AlgorithmMap.TryGetValue(algorithmId, out var algorithmName))
                     {
@@ -185,7 +184,7 @@ namespace NzCovidPass.Core.Tokens
             /// <summary>
             /// Gets the raw header bytes.
             /// </summary>
-            public byte[] Bytes => _rawHeader.ToArray();
+            public byte[] Bytes => _headerBytes;
         }
 
         /// <summary>
@@ -196,18 +195,18 @@ namespace NzCovidPass.Core.Tokens
         /// </remarks>
         public class Payload
         {
-            private readonly CborObject _cborObject;
-            private readonly ReadOnlyMemory<byte> _rawPayload;
+            private readonly IReadOnlyDictionary<object, object> _claims;
+            private readonly byte[] _payloadBytes;
 
             /// <summary>
             /// Initializes a new instance of the <see cref="Header" /> class.
             /// </summary>
-            /// <param name="cborObject">The CBOR object representing the payload.</param>
-            /// <param name="rawPayload">The raw bytes of the payload.</param>
-            public Payload(CborObject cborObject, ReadOnlyMemory<byte> rawPayload)
+            /// <param name="claims">The claims contained in the payload.</param>
+            /// <param name="payloadBytes">The raw bytes of the payload.</param>
+            public Payload(IReadOnlyDictionary<object, object> claims, byte[] payloadBytes)
             {
-                _cborObject = Requires.NotNull(cborObject);
-                _rawPayload = rawPayload;
+                _claims = Requires.NotNull(claims);
+                _payloadBytes = payloadBytes;
             }
 
             /// <summary>
@@ -222,43 +221,59 @@ namespace NzCovidPass.Core.Tokens
             {
                 get
                 {
-                    var cti = ReadRawClaimValue(_cborObject, ClaimIds.Payload.Cti);
+                    var cti = ReadRawClaimValue(_claims, ClaimIds.Payload.Cti);
 
                     if (cti is null)
                     {
                         return Guid.Empty;
                     }
 
-                    var ctiBytes = cti.GetValueBytes();
+                    var ctiBytes = cti as byte[];
 
-                    return new Guid(ctiBytes.Span);
+                    return new Guid(ctiBytes!);
                 }
             }
 
             /// <summary>
             /// Gets the value of <c>iss</c> claim.
             /// </summary>
-            public string? Issuer => ReadClaimValue<string>(_cborObject, ClaimIds.Payload.Iss);
+            public string? Issuer => ReadClaimValue<string>(_claims, ClaimIds.Payload.Iss);
 
             /// <summary>
             /// Gets the value of <c>exp</c> claim.
             /// </summary>
-            public DateTimeOffset Expiry => DateTimeOffset.FromUnixTimeSeconds(ReadClaimValue<int>(_cborObject, ClaimIds.Payload.Exp));
+            public DateTimeOffset Expiry => DateTimeOffset.FromUnixTimeSeconds(ReadClaimValue<long>(_claims, ClaimIds.Payload.Exp));
 
             /// <summary>
             /// Gets the value of <c>nbf</c> claim.
             /// </summary>
-            public DateTimeOffset NotBefore => DateTimeOffset.FromUnixTimeSeconds(ReadClaimValue<int>(_cborObject, ClaimIds.Payload.Nbf));
+            public DateTimeOffset NotBefore => DateTimeOffset.FromUnixTimeSeconds(ReadClaimValue<long>(_claims, ClaimIds.Payload.Nbf));
 
             /// <summary>
             /// Gets the value of <c>vc</c> claim.
             /// </summary>
-            public VerifiableCredential<PublicCovidPass>? Credential => ReadClaimValue<VerifiableCredential<PublicCovidPass>>(_cborObject, ClaimIds.Payload.Vc);
+            public VerifiableCredential<PublicCovidPass>? Credential
+            {
+                get
+                {
+                    var credential = ReadRawClaimValue(_claims, ClaimIds.Payload.Vc);
+
+                    if (credential is null)
+                    {
+                        return null;
+                    }
+
+                    // TODO: This is expensive so should ideally be cached or done another way.
+                    var credentialJson = JsonSerializer.Serialize(credential);
+
+                    return JsonSerializer.Deserialize<VerifiableCredential<PublicCovidPass>>(credentialJson);
+                }
+            }
 
             /// <summary>
             /// Gets the raw payload bytes.
             /// </summary>
-            public byte[] Bytes => _rawPayload.ToArray();
+            public byte[] Bytes => _payloadBytes;
         }
 
         /// <summary>
@@ -269,45 +284,38 @@ namespace NzCovidPass.Core.Tokens
         /// </remarks>
         public class Signature
         {
-            private readonly ReadOnlyMemory<byte> _rawSignature;
+            private readonly byte[] _signatureBytes;
 
             /// <summary>
             /// Initializes a new instance of the <see cref="Signature" /> class.
             /// </summary>
-            /// <param name="rawSignature">The raw bytes of the signature.</param>
-            public Signature(ReadOnlyMemory<byte> rawSignature)
+            /// <param name="signatureBytes">The raw bytes of the signature.</param>
+            public Signature(byte[] signatureBytes)
             {
-                _rawSignature = rawSignature;
+                _signatureBytes = signatureBytes;
             }
 
             /// <summary>
             /// Gets the raw signature bytes.
             /// </summary>
-            public byte[] Bytes => _rawSignature.ToArray();
+            public byte[] Bytes => _signatureBytes;
         }
 
-        private static T? ReadClaimValue<T>(CborObject cborObject, CborValue claimId)
+        private static T? ReadClaimValue<T>(IReadOnlyDictionary<object, object> claims, object claimId)
         {
-            var rawClaimValue = ReadRawClaimValue(cborObject, claimId);
+            var rawClaimValue = ReadRawClaimValue(claims, claimId);
 
             if (rawClaimValue is null)
             {
                 return default;
             }
 
-            if (rawClaimValue is CborObject claimObject)
-            {
-                var claimObjectJson = claimObject.ToString();
-
-                return JsonSerializer.Deserialize<T>(claimObjectJson);
-            }
-
-            return rawClaimValue.Value<T>();
+            return (T) Convert.ChangeType(rawClaimValue, typeof(T));
         }
 
-        private static CborValue? ReadRawClaimValue(CborObject cborObject, CborValue claimId)
+        private static object? ReadRawClaimValue(IReadOnlyDictionary<object, object> claims, object claimId)
         {
-            if (cborObject.TryGetValue(claimId, out var rawClaimValue))
+            if (claims.TryGetValue(claimId, out var rawClaimValue))
             {
                 return rawClaimValue;
             }

@@ -1,4 +1,4 @@
-using NzCovidPass.Core.Tokens;
+using NzCovidPass.Core.Cwt;
 using NzCovidPass.Core.Models;
 using NzCovidPass.Core.Shared;
 

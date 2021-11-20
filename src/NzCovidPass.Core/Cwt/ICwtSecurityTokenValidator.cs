@@ -1,4 +1,4 @@
-namespace NzCovidPass.Core.Tokens
+namespace NzCovidPass.Core.Cwt
 {
     /// <summary>
     /// Defines the ability to validate <see cref="CwtSecurityToken" /> instances.

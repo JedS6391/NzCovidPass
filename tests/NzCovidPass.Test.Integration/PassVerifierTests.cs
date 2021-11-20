@@ -4,9 +4,9 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using NzCovidPass.Core;
+using NzCovidPass.Core.Cwt;
 using NzCovidPass.Core.Models;
 using NzCovidPass.Core.Shared;
-using NzCovidPass.Core.Tokens;
 using Xunit;
 
 namespace NzCovidPass.Test.Integration;
@@ -35,7 +35,7 @@ public class PassVerifierTests
         Assert.Empty(result.FailureReasons);
 
         ValidateToken(result.Token);
-        ValidatePass(result.Pass);
+        ValidatePass(result.Pass!);
     }
 
     [Theory]
@@ -81,7 +81,7 @@ public class PassVerifierTests
         var jsonWebKey = token.SigningKey as JsonWebKey;
 
         Assert.NotNull(jsonWebKey);
-        Assert.Equal("EC", jsonWebKey.Kty);
+        Assert.Equal("EC", jsonWebKey!.Kty);
         Assert.Equal("P-256", jsonWebKey.Crv);
         Assert.Equal("zRR-XGsCp12Vvbgui4DD6O6cqmhfPuXMhi1OxPl8760", jsonWebKey.X);
         Assert.Equal("Iv5SU6FuW-TRYh5_GOrJlcV_gpF_GpFQhCOD8LSk3T0", jsonWebKey.Y);

@@ -1,16 +1,15 @@
 using System;
-using System.Buffers;
 using System.Collections.Generic;
+using System.Formats.Cbor;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
-using Dahomey.Cbor.Serialization;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using NSubstitute;
 using NzCovidPass.Core;
+using NzCovidPass.Core.Cwt;
 using NzCovidPass.Core.Models;
-using NzCovidPass.Core.Tokens;
 using NzCovidPass.Core.Verification;
 using Xunit;
 
@@ -231,7 +230,7 @@ public class CwtSecurityTokenValidatorTests
         var context = new CwtSecurityTokenValidatorContext(token);
 
         _verificationKeyProvider
-            .GetKeyAsync(Arg.Is(token.Issuer), Arg.Is(token.KeyId))
+            .GetKeyAsync(Arg.Is(token.Issuer!), Arg.Is(token.KeyId!))
             .Returns(Task.FromException<SecurityKey>(new VerificationKeyNotFoundException("Key not found")));
 
         await _tokenValidator.ValidateTokenAsync(context);
@@ -275,8 +274,8 @@ public class CwtSecurityTokenValidatorTests
         });
 
         _verificationKeyProvider
-            .GetKeyAsync(Arg.Is(token.Issuer), Arg.Is(token.KeyId))
-            .Returns(Task.FromResult(signingKey));
+            .GetKeyAsync(Arg.Is(token.Issuer!), Arg.Is(token.KeyId!))
+            .Returns(Task.FromResult(signingKey!));
 
         await _tokenValidator.ValidateTokenAsync(context);
 
@@ -314,8 +313,8 @@ public class CwtSecurityTokenValidatorTests
         var context = new CwtSecurityTokenValidatorContext(token);
 
         _verificationKeyProvider
-            .GetKeyAsync(Arg.Is(token.Issuer), Arg.Is(token.KeyId))
-            .Returns(Task.FromResult(signingKey));
+            .GetKeyAsync(Arg.Is(token.Issuer!), Arg.Is(token.KeyId!))
+            .Returns(Task.FromResult(signingKey!));
 
         await _tokenValidator.ValidateTokenAsync(context);
 
@@ -350,8 +349,8 @@ public class CwtSecurityTokenValidatorTests
         var context = new CwtSecurityTokenValidatorContext(token);
 
         _verificationKeyProvider
-            .GetKeyAsync(Arg.Is(token.Issuer), Arg.Is(token.KeyId))
-            .Returns(Task.FromResult(signingKey));
+            .GetKeyAsync(Arg.Is(token.Issuer!), Arg.Is(token.KeyId!))
+            .Returns(Task.FromResult(signingKey!));
 
         await _tokenValidator.ValidateTokenAsync(context);
 
@@ -401,8 +400,8 @@ public class CwtSecurityTokenValidatorTests
         var context = new CwtSecurityTokenValidatorContext(token);
 
         _verificationKeyProvider
-            .GetKeyAsync(Arg.Is(token.Issuer), Arg.Is(token.KeyId))
-            .Returns(Task.FromResult(signingKey));
+            .GetKeyAsync(Arg.Is(token.Issuer!), Arg.Is(token.KeyId!))
+            .Returns(Task.FromResult(signingKey!));
 
         await _tokenValidator.ValidateTokenAsync(context);
 
@@ -454,8 +453,8 @@ public class CwtSecurityTokenValidatorTests
         var context = new CwtSecurityTokenValidatorContext(token);
 
         _verificationKeyProvider
-            .GetKeyAsync(Arg.Is(token.Issuer), Arg.Is(token.KeyId))
-            .Returns(Task.FromResult(signingKey));
+            .GetKeyAsync(Arg.Is(token.Issuer!), Arg.Is(token.KeyId!))
+            .Returns(Task.FromResult(signingKey!));
 
         await _tokenValidator.ValidateTokenAsync(context);
 
@@ -501,8 +500,8 @@ public class CwtSecurityTokenValidatorTests
         var context = new CwtSecurityTokenValidatorContext(token);
 
         _verificationKeyProvider
-            .GetKeyAsync(Arg.Is(token.Issuer), Arg.Is(token.KeyId))
-            .Returns(Task.FromResult(signingKey));
+            .GetKeyAsync(Arg.Is(token.Issuer!), Arg.Is(token.KeyId!))
+            .Returns(Task.FromResult(signingKey!));
 
         await _tokenValidator.ValidateTokenAsync(context);
 
@@ -531,23 +530,22 @@ public class CwtSecurityTokenValidatorTests
     {
         // https://datatracker.ietf.org/doc/html/rfc8152#section-4.4
         // Note this process assumes a COSE_Sign1 structure, which NZ Covid passes should be.
-        var b = new ArrayBufferWriter<byte>();
-        var w = new CborWriter(b);
+        var cborWriter = new CborWriter();
 
-        w.WriteBeginArray(4);
+        cborWriter.WriteStartArray(4);
 
         // context
-        w.WriteString("Signature1");
+        cborWriter.WriteTextString("Signature1");
         // body_protected
-        w.WriteByteString(header.Bytes);
+        cborWriter.WriteByteString(header.Bytes);
         // external_aad
-        w.WriteByteString(Array.Empty<byte>());
+        cborWriter.WriteByteString(Array.Empty<byte>());
         // payload
-        w.WriteByteString(payload.Bytes);
+        cborWriter.WriteByteString(payload.Bytes);
 
-        w.WriteEndArray(4);
+        cborWriter.WriteEndArray();
 
-        var signatureStructure = b.WrittenMemory.ToArray();
+        var signatureStructure = cborWriter.Encode();
 
         var ecdSa = ECDsa.Create(ECCurve.NamedCurves.nistP256);
         var key = new ECDsaSecurityKey(ecdSa);

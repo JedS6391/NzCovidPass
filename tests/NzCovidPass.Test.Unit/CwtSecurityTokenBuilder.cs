@@ -1,12 +1,10 @@
 using System;
-using System.Buffers;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
-using Dahomey.Cbor;
-using Dahomey.Cbor.ObjectModel;
 using Microsoft.IdentityModel.Tokens;
+using NzCovidPass.Core.Cwt;
 using NzCovidPass.Core.Models;
-using NzCovidPass.Core.Tokens;
 
 namespace NzCovidPass.Test.Unit
 {
@@ -26,7 +24,7 @@ namespace NzCovidPass.Test.Unit
 
         public CwtSecurityTokenBuilder WithKeyId(string keyId)
         {
-            _context.Header[ClaimIds.Header.KeyId] = new CborByteString(Encoding.UTF8.GetBytes(keyId));
+            _context.Header[ClaimIds.Header.KeyId] = Encoding.UTF8.GetBytes(keyId);
 
             return this;
         }
@@ -40,7 +38,7 @@ namespace NzCovidPass.Test.Unit
 
         public CwtSecurityTokenBuilder WithCti(Guid cti)
         {
-            _context.Payload[ClaimIds.Payload.Cti] = new CborByteString(cti.ToByteArray());
+            _context.Payload[ClaimIds.Payload.Cti] = cti.ToByteArray();
 
             return this;
         }
@@ -68,19 +66,19 @@ namespace NzCovidPass.Test.Unit
 
         public CwtSecurityTokenBuilder WithPublicCovidPassCredential(VerifiableCredential<PublicCovidPass> credential)
         {
-            var credentialSubjectObject = new CborObject(new Dictionary<CborValue, CborValue>()
+            var credentialSubject = new Dictionary<object, object>()
             {
                 { "givenName", credential.CredentialSubject.GivenName },
                 { "familyName", credential.CredentialSubject.FamilyName },
                 { "dob", credential.CredentialSubject.DateOfBirth.ToString("yyyy-MM-dd") },
-            });
-            var credentialObject = new CborObject(new Dictionary<CborValue, CborValue>()
+            };
+            var credentialObject = new Dictionary<object, object>()
             {
                 { "version", credential.Version },
-                { "@context", CborArray.FromCollection(credential.Context) },
-                { "type", CborArray.FromCollection(credential.Type) },
-                { "credentialSubject", credentialSubjectObject }
-            });
+                { "@context", credential.Context.ToList() },
+                { "type", credential.Type.ToList() },
+                { "credentialSubject", credentialSubject }
+            };
 
             _context.Payload[ClaimIds.Payload.Vc] = credentialObject;
 
@@ -105,22 +103,12 @@ namespace NzCovidPass.Test.Unit
 
         private CwtSecurityToken.Header BuildHeader()
         {
-            var header = new CborObject(_context.Header);
-
-            var b = new ArrayBufferWriter<byte>();
-            Cbor.Serialize(header, b);
-
-            return new CwtSecurityToken.Header(header, b.WrittenSpan.ToArray());
+            return new CwtSecurityToken.Header(_context.Header, Array.Empty<byte>());
         }
 
         private CwtSecurityToken.Payload BuildPayload()
         {
-            var payload = new CborObject(_context.Payload);
-
-            var b = new ArrayBufferWriter<byte>();
-            Cbor.Serialize(payload, b);
-
-            return new CwtSecurityToken.Payload(payload, b.WrittenSpan.ToArray());
+            return new CwtSecurityToken.Payload(_context.Payload, Array.Empty<byte>());
         }
 
         private CwtSecurityToken.Signature BuildSignature(CwtSecurityToken.Header header, CwtSecurityToken.Payload payload)
@@ -132,8 +120,8 @@ namespace NzCovidPass.Test.Unit
 
         private class Context
         {
-            public Dictionary<CborValue, CborValue> Header { get; } = new Dictionary<CborValue, CborValue>();
-            public Dictionary<CborValue, CborValue> Payload { get; } = new Dictionary<CborValue, CborValue>();
+            public Dictionary<object, object> Header { get; } = new Dictionary<object, object>();
+            public Dictionary<object, object> Payload { get; } = new Dictionary<object, object>();
             public Func<CwtSecurityToken.Header, CwtSecurityToken.Payload, byte[]> SignatureFunc { get; set; } = (header, payload) => Array.Empty<byte>();
         }
 

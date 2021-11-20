@@ -1,6 +1,6 @@
 using System;
 using Microsoft.Extensions.Logging.Abstractions;
-using NzCovidPass.Core.Tokens;
+using NzCovidPass.Core.Cwt;
 using Xunit;
 
 namespace NzCovidPass.Test.Unit;
@@ -31,10 +31,25 @@ public class CwtSecurityTokenReaderTests
     }
 
     [Fact]
-    public void ReadToken_InvalidMainCborObjectType_ReturnsFailResult()
+    public void ReadToken_MissingCoseSingleSignerTag_ReturnsFailResult()
     {
         // base32(cbor_encode({"test": "1"}))
         const string Payload = "UFSHIZLTORQTE===";
+
+        var context = new CwtSecurityTokenReaderContext(Payload);
+
+        _tokenReader.ReadToken(context);
+
+        AssertFailedResult(context);
+
+        Assert.Contains(CwtSecurityTokenReaderContext.FailedToDecodeCborStructure, context.FailureReasons);
+    }
+
+    [Fact]
+    public void ReadToken_InvalidMainCborObjectType_ReturnsFailResult()
+    {
+        // base32(cbor_encode(18({"test": "1"})))
+        const string Payload = "2KQWI5DFON2GCMI=";
 
         var context = new CwtSecurityTokenReaderContext(Payload);
 
@@ -61,10 +76,10 @@ public class CwtSecurityTokenReaderTests
     }
 
     [Theory]
-    [InlineData("2KCKAQQSGRBBENCCCI2A====")] // base32(cbor_encode([{}, h'1234', h'1234', h'1234'])) - first component not a byte string
-    [InlineData("2KCEEERUIIJDIQQSGRBBENA=")] // base32(cbor_encode([h'1234', h'1234', h'1234', h'1234'])) - second component not an object
-    [InlineData("QRBBENFAUBBBENA=")] // base32(cbor_encode([h'1234', {}, {}, h'1234'])) - third component component not a byte string
-    [InlineData("QRBBENFAIIJDJIA=")] // base32(cbor_encode([h'1234', {}, h'1234', {}])) - fourth component component not a byte string
+    [InlineData("2KCKAQQSGRBBENCCCI2A====")] // base32(cbor_encode(18([{}, h'1234', h'1234', h'1234']))) - first component not a byte string
+    [InlineData("2KCEEERUIIJDIQQSGRBBENA=")] // base32(cbor_encode(18([h'1234', h'1234', h'1234', h'1234']))) - second component not an object
+    [InlineData("2KCEEERUUCQEEERU")] // base32(cbor_encode(18([h'1234', {}, {}, h'1234']))) - third component component not a byte string
+    [InlineData("2KCEEERUUBBBENFA")] // base32(cbor_encode(18([h'1234', {}, h'1234', {}]))) - fourth component component not a byte string
     public void ReadToken_InvalidCoseStructureComponentType_ReturnsFailResult(string payload)
     {
         var context = new CwtSecurityTokenReaderContext(payload);
@@ -76,6 +91,37 @@ public class CwtSecurityTokenReaderTests
         Assert.Contains(CwtSecurityTokenReaderContext.InvalidCoseStructure, context.FailureReasons);
     }
 
+    [Fact]
+    public void ReadToken_InvalidHeaderByteString_ReturnsFailResult()
+    {
+        // base32(cbor_encode(18([h'816474657374', {}, h'A0', h'1234'])))
+        // h'816474657374' = ["test"]
+        const string Payload = "2KCENALEORSXG5FAIGQEEERU";
+
+        var context = new CwtSecurityTokenReaderContext(Payload);
+
+        _tokenReader.ReadToken(context);
+
+        AssertFailedResult(context);
+
+        Assert.Contains(CwtSecurityTokenReaderContext.FailedToDecodeCborStructure, context.FailureReasons);
+    }
+
+    [Fact]
+    public void ReadToken_InvalidPayloadByteString_ReturnsFailResult()
+    {
+        // base32(cbor_encode(18([h'A0', {}, h'816474657374', h'1234'])))
+        // h'816474657374' = ["test"]
+        const string Payload = "2KCEDIFAI2AWI5DFON2EEERU";
+
+        var context = new CwtSecurityTokenReaderContext(Payload);
+
+        _tokenReader.ReadToken(context);
+
+        AssertFailedResult(context);
+
+        Assert.Contains(CwtSecurityTokenReaderContext.FailedToDecodeCborStructure, context.FailureReasons);
+    }
     [Fact]
     public void ReadToken_Valid_ReturnsSuccessResult()
     {
