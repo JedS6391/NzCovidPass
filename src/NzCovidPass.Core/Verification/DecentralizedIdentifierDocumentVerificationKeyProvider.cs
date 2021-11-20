@@ -54,6 +54,13 @@ namespace NzCovidPass.Core.Verification
 
             var decentralizedIdentifierDocument = await GetDecentralizedIdentifierDocumentAsync(issuer).ConfigureAwait(false);
 
+            if (decentralizedIdentifierDocument is null)
+            {
+                _logger.LogError("No DID document was retrieved for key reference '{KeyReference}'", keyReference);
+
+                throw new VerificationKeyNotFoundException($"Unable to retrieve key '{keyReference}'.");
+            }
+
             if (!decentralizedIdentifierDocument.AssertionMethods.Contains(keyReference))
             {
                 _logger.LogError("Key reference '{KeyReference}' not found in assertion methods", keyReference);
