@@ -35,23 +35,37 @@ namespace NzCovidPass.Core.Cwt
             _signature = Requires.NotNull(signature);
         }
 
-        /// <inheritdoc />
+        /// <summary>
+        /// Gets the value of the <c>jti</c> claim.
+        /// </summary>
+        /// <remarks>
         public override string? Id => Jti;
 
-        /// <inheritdoc />
+        /// <summary>
+        /// Gets the value of the <c>iss</c> claim.
+        /// </summary>
         public override string? Issuer => _payload.Issuer;
 
         /// <inheritdoc />
         public override SecurityKey? SecurityKey => null;
 
-        /// <inheritdoc />
+        /// <summary>
+        /// Gets or sets the <see cref="SecurityKey" /> that signed the token.
+        /// </summary>
+        /// <remarks>
+        /// This property will only be set once the token signature been validated.
+        /// </remarks>
         public override SecurityKey? SigningKey { get; set; }
 
-        /// <inheritdoc />
-        public override DateTime ValidFrom => NotBefore.Date;
+        /// <summary>
+        /// Gets the value of the <c>nbf</c> claim, represented as a UTC <see cref="DateTime" />.
+        /// </summary>
+        public override DateTime ValidFrom => NotBefore.UtcDateTime;
 
-        /// <inheritdoc />
-        public override DateTime ValidTo => Expiry.Date;
+        /// <summary>
+        /// Gets the value of the <c>exp</c> claim, represented as a UTC <see cref="DateTime" />.
+        /// </summary>
+        public override DateTime ValidTo => Expiry.UtcDateTime;
 
         /// <summary>
         /// Gets the identifier of the key used to sign the token from the CWT header.
@@ -83,7 +97,7 @@ namespace NzCovidPass.Core.Cwt
         /// Gets the value of the <c>exp</c> claim from the CWT payload.
         /// </summary>
         /// <remarks>
-        /// <see href="https://datatracker.ietf.org/doc/html/rfc8392#section-3.1.4" />
+        /// The value of the claim is converted from a UNIX time expressed in seconds to a <see cref="DateTimeOffset" />.
         /// </remarks>
         public DateTimeOffset Expiry => _payload.Expiry;
 
@@ -91,7 +105,7 @@ namespace NzCovidPass.Core.Cwt
         /// Gets the value of the <c>nbf</c> claim from the CWT payload.
         /// </summary>
         /// <remarks>
-        /// <see href="https://datatracker.ietf.org/doc/html/rfc8392#section-3.1.5" />
+        /// The value of the claim is converted from a UNIX time expressed in seconds to a <see cref="DateTimeOffset" />.
         /// </remarks>
         public DateTimeOffset NotBefore => _payload.NotBefore;
 
@@ -242,11 +256,17 @@ namespace NzCovidPass.Core.Cwt
             /// <summary>
             /// Gets the value of <c>exp</c> claim.
             /// </summary>
+            /// <remarks>
+            /// <see href="https://datatracker.ietf.org/doc/html/rfc8392#section-3.1.4" />
+            /// </remarks>
             public DateTimeOffset Expiry => DateTimeOffset.FromUnixTimeSeconds(ReadClaimValue<long>(_claims, ClaimIds.Payload.Exp));
 
             /// <summary>
             /// Gets the value of <c>nbf</c> claim.
             /// </summary>
+            /// <remarks>
+            /// <see href="https://datatracker.ietf.org/doc/html/rfc8392#section-3.1.5" />
+            /// </remarks>
             public DateTimeOffset NotBefore => DateTimeOffset.FromUnixTimeSeconds(ReadClaimValue<long>(_claims, ClaimIds.Payload.Nbf));
 
             /// <summary>
