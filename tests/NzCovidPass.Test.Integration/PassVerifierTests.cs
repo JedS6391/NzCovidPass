@@ -73,6 +73,10 @@ public class PassVerifierTests
         Assert.Equal("did:web:nzcp.covid19.health.nz", token.Issuer);
         Assert.Equal(DateTimeOffset.FromUnixTimeSeconds(1635883530), token.NotBefore);
         Assert.Equal(DateTimeOffset.FromUnixTimeSeconds(1951416330), token.Expiry);
+        Assert.Equal(DateTimeKind.Utc, token.ValidFrom.Kind);
+        Assert.Equal(DateTimeKind.Utc, token.ValidTo.Kind);
+        Assert.Equal(new DateTime(2021, 11, 2, 20, 5, 30), token.ValidFrom);
+        Assert.Equal(new DateTime(2031, 11, 2, 20, 5, 30), token.ValidTo);
 
         // Signature + key
         Assert.NotNull(token.SigningKey);
