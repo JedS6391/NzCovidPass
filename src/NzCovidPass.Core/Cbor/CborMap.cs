@@ -50,7 +50,7 @@ namespace NzCovidPass.Core.Cbor
         private static object ConvertCborObject(CborObject @object) => @object switch
         {
             CborMap map => map.ToGenericDictionary(),
-            CborArray array => array.Values.Select(v => ConvertCborObject(v)),
+            CborArray array => array.Values.Select(v => ConvertCborObject(v)).ToList(),
             CborByteString byteString => byteString.Value,
             CborTextString textString => textString.Value,
             CborInteger integer => integer.Value,

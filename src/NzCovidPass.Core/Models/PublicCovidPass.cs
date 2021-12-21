@@ -1,4 +1,3 @@
-using System.Text.Json.Serialization;
 using NzCovidPass.Core.Shared;
 
 namespace NzCovidPass.Core.Models
@@ -17,7 +16,6 @@ namespace NzCovidPass.Core.Models
         /// <param name="givenName">The given name of the subject.</param>
         /// <param name="familyName">The family name of the subject.</param>
         /// /// <param name="dateOfBirth">The date of birth of the subject.</param>
-        [JsonConstructor]
         public PublicCovidPass(string givenName, string familyName, DateTimeOffset dateOfBirth)
         {
             GivenName = Requires.NotNull(givenName);
@@ -29,22 +27,16 @@ namespace NzCovidPass.Core.Models
         /// <summary>
         /// Gets the given name of the subject.
         /// </summary>
-        [JsonPropertyName("givenName")]
-        [JsonInclude]
         public string GivenName { get; private set; }
 
         /// <summary>
         /// Gets the family name of the subject.
         /// </summary>
-        [JsonPropertyName("familyName")]
-        [JsonInclude]
         public string FamilyName { get; private set; }
 
         /// <summary>
         /// Gets the date of birth of the subject.
         /// </summary>
-        [JsonPropertyName("dob")]
-        [JsonInclude]
         public DateTimeOffset DateOfBirth { get; private set; }
 
         /// <summary>
