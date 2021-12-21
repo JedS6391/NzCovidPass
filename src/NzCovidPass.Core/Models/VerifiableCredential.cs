@@ -1,4 +1,3 @@
-using System.Text.Json.Serialization;
 using NzCovidPass.Core.Shared;
 
 namespace NzCovidPass.Core.Models
@@ -19,7 +18,6 @@ namespace NzCovidPass.Core.Models
         /// <param name="context">The JSON-LD context properties.</param>
         /// <param name="type">The verifiable credential type properties.</param>
         /// <param name="credentialSubject">An object representing claims about the subject of the credential.</param>
-        [JsonConstructor]
         public VerifiableCredential(
             string version,
             IReadOnlyList<string> context,
@@ -35,30 +33,21 @@ namespace NzCovidPass.Core.Models
         /// <summary>
         /// Gets the version.
         /// </summary>
-        [JsonPropertyName("version")]
-        [JsonInclude]
         public string Version { get; private set; }
 
         /// <summary>
         /// Gets the JSON-LD contexts.
         /// </summary>
-        [JsonPropertyName("@context")]
-        [JsonInclude]
-        [JsonConverter(typeof(ContextJsonConverter))]
         public IReadOnlyList<string> Context { get; private set; }
 
         /// <summary>
         /// Gets the verifiable credential types.
         /// </summary>
-        [JsonPropertyName("type")]
-        [JsonInclude]
         public IReadOnlyList<string> Type { get; private set; }
 
         /// <summary>
         /// Gets the details of the subject the pass belongs to.
         /// </summary>
-        [JsonPropertyName("credentialSubject")]
-        [JsonInclude]
         public TCredential CredentialSubject { get; private set; }
     }
 

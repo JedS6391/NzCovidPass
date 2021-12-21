@@ -1,5 +1,4 @@
 using System.Text;
-using System.Text.Json;
 using Microsoft.IdentityModel.Tokens;
 using NzCovidPass.Core.Models;
 using NzCovidPass.Core.Shared;
@@ -38,7 +37,6 @@ namespace NzCovidPass.Core.Cwt
         /// <summary>
         /// Gets the value of the <c>jti</c> claim.
         /// </summary>
-        /// <remarks>
         public override string? Id => Jti;
 
         /// <summary>
@@ -278,15 +276,29 @@ namespace NzCovidPass.Core.Cwt
                 {
                     var credential = ReadRawClaimValue(_claims, ClaimIds.Payload.Vc);
 
-                    if (credential is null)
+                    if (credential is null || credential is not IDictionary<object, object>)
                     {
                         return null;
                     }
 
-                    // TODO: This is expensive so should ideally be cached or done another way.
-                    var credentialJson = JsonSerializer.Serialize(credential);
+                    var credentialMap = credential as IDictionary<object, object>;
+                    var credentialSubjectMap = credentialMap!["credentialSubject"] as IDictionary<object, object>;
 
-                    return JsonSerializer.Deserialize<VerifiableCredential<PublicCovidPass>>(credentialJson);
+                    var version = credentialMap["version"] as string;
+                    var context = credentialMap["@context"] as IEnumerable<object>;
+                    var type = credentialMap["type"] as IEnumerable<object>;
+                    var givenName = credentialSubjectMap!["givenName"] as string;
+                    var familyName = credentialSubjectMap!["familyName"] as string;
+                    var dateOfBirth = credentialSubjectMap!["dob"] as string;
+
+                    return new VerifiableCredential<PublicCovidPass>(
+                        version!,
+                        context!.OfType<string>().ToList(),
+                        type!.OfType<string>().ToList(),
+                        new PublicCovidPass(
+                            givenName!,
+                            familyName!,
+                            DateTimeOffset.Parse(dateOfBirth!)));
                 }
             }
 
